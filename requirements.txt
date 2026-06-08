@@ -25,6 +25,9 @@ google-auth-httplib2>=0.2
 # anthropic>=0.40
 # openai>=1.30
 
+# Dev / tests
+pytest>=8.0
+
 # NOTE: ffmpeg + ffprobe are NOT pip packages. Install the ffmpeg binaries
 # separately and make sure they are on PATH. On Windows:
 #   winget install Gyan.FFmpeg
