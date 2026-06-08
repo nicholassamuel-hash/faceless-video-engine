@@ -1,0 +1,24 @@
+# Secrets & config
+.env
+secrets/
+
+# Working data / generated media / DB
+work/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Tooling / agent state (not part of the app)
+.claude/
+.claude-flow/
+.swarm/
+.mcp.json
