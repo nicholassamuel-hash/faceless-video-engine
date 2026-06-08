@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Faceless Studio</title>
+<style>
+  :root{
+    --bg:#0b0d12; --bg2:#11141c; --card:#161a24; --card2:#1c2130;
+    --line:#262c3a; --txt:#e7ebf3; --mut:#8b93a7; --accent:#7c5cff;
+    --accent2:#23c4a8; --danger:#ff5c7a; --ok:#3ddc97; --warn:#ffb454;
+    --grad:linear-gradient(135deg,#7c5cff,#23c4a8);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:
+    radial-gradient(1200px 600px at 80% -10%,#1a1f30 0,var(--bg) 55%);color:var(--txt);height:100vh;overflow:hidden}
+  .app{display:grid;grid-template-columns:230px 1fr;grid-template-rows:1fr 150px;height:100vh}
+  /* sidebar */
+  .side{grid-row:1/3;background:var(--bg2);border-right:1px solid var(--line);padding:22px 16px;display:flex;flex-direction:column;gap:6px}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:22px;padding:0 6px}
+  .logo .dot{width:30px;height:30px;border-radius:9px;background:var(--grad);box-shadow:0 6px 18px rgba(124,92,255,.45)}
+  .logo b{font-size:17px;letter-spacing:.3px}
+  .logo span{display:block;font-size:11px;color:var(--mut);font-weight:400}
+  .nav{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;color:var(--mut);cursor:pointer;font-weight:600;font-size:14px;transition:.15s}
+  .nav:hover{background:var(--card);color:var(--txt)}
+  .nav.active{background:var(--card2);color:#fff;box-shadow:inset 0 0 0 1px var(--line)}
+  .nav.active::before{content:"";position:absolute;margin-left:-13px;width:3px;height:20px;border-radius:3px;background:var(--grad)}
+  .nav .ic{font-size:17px;width:20px;text-align:center}
+  .side .foot{margin-top:auto;font-size:11px;color:var(--mut);padding:8px 6px;line-height:1.6}
+  /* main */
+  .main{grid-row:1/2;overflow-y:auto;padding:26px 32px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+  .topbar h1{margin:0;font-size:22px}
+  .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{font-size:11.5px;padding:5px 11px;border-radius:20px;background:var(--card);border:1px solid var(--line);color:var(--mut);font-weight:600}
+  .pill b{color:var(--txt);font-weight:700}
+  .pill.ok{color:var(--ok)} .pill.bad{color:var(--danger)}
+  .panel{display:none;animation:fade .25s ease}
+  .panel.show{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px}
+  .card h2{margin:0 0 4px;font-size:16px}
+  .card .sub{color:var(--mut);font-size:13px;margin-bottom:18px}
+  label{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin:14px 0 6px}
+  input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);
+    border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;outline:none;transition:.15s}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.15)}
+  .row{display:flex;gap:14px}.row>div{flex:1}
+  .btn{margin-top:18px;border:0;border-radius:11px;padding:12px 20px;font-size:14px;font-weight:700;color:#fff;
+    background:var(--grad);cursor:pointer;transition:.15s;box-shadow:0 8px 22px rgba(124,92,255,.35)}
+  .btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn.ghost{background:var(--card2);box-shadow:none;color:var(--txt);border:1px solid var(--line)}
+  .btn.sm{padding:8px 14px;font-size:13px;margin:0}
+  .btn.ok{background:linear-gradient(135deg,#3ddc97,#23c4a8)}
+  .btn.dgr{background:linear-gradient(135deg,#ff5c7a,#ff8a5c)}
+  /* review grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+  .vcard{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  .vcard video{width:100%;aspect-ratio:9/16;background:#000;object-fit:cover;max-height:420px}
+  .vcard .body{padding:13px 14px;display:flex;flex-direction:column;gap:7px;flex:1}
+  .vcard .ttl{font-weight:700;font-size:14px;line-height:1.3}
+  .vcard .meta{font-size:11.5px;color:var(--mut)}
+  .vcard .tags{font-size:11.5px;color:var(--accent2);font-weight:600}
+  .vcard .acts{display:flex;gap:8px;margin-top:auto;padding-top:6px}
+  .tag{display:inline-block;font-size:11px;background:var(--card2);border:1px solid var(--line);color:var(--mut);
+    padding:3px 9px;border-radius:20px;font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  td b{color:#fff}
+  .empty{color:var(--mut);text-align:center;padding:50px;font-size:14px}
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.3);
+    border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:8px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  /* console */
+  .console{grid-column:2/3;background:#06070a;border-top:1px solid var(--line);padding:10px 18px;overflow-y:auto;
+    font-family:"Cascadia Code",Consolas,monospace;font-size:11.5px;line-height:1.55;color:#9fb0c8}
+  .console .hd{position:sticky;top:0;background:#06070a;color:var(--mut);font-weight:700;padding-bottom:6px;
+    display:flex;justify-content:space-between;font-family:"Segoe UI",sans-serif}
+  .console .ln{white-space:pre-wrap;word-break:break-word}
+  .console .ln.err{color:var(--danger)} .console .ln.warn{color:var(--warn)}
+  /* toast */
+  #toast{position:fixed;bottom:170px;right:26px;display:flex;flex-direction:column;gap:10px;z-index:50}
+  .toast{background:var(--card2);border:1px solid var(--line);border-left:4px solid var(--accent);
+    padding:13px 18px;border-radius:11px;min-width:240px;box-shadow:0 12px 30px rgba(0,0,0,.4);animation:fade .2s}
+  .toast.ok{border-left-color:var(--ok)} .toast.err{border-left-color:var(--danger)}
+  .toast b{display:block;margin-bottom:2px} .toast small{color:var(--mut)}
+  .hint{font-size:12px;color:var(--mut);margin-top:8px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="logo"><div class="dot"></div><div><b>Faceless Studio</b><span>local content engine</span></div></div>
+    <div class="nav active" data-p="generate"><span class="ic">✨</span> Generate</div>
+    <div class="nav" data-p="clip"><span class="ic">✂️</span> Clip YouTube</div>
+    <div class="nav" data-p="review"><span class="ic">🎬</span> Review</div>
+    <div class="nav" data-p="tiktok"><span class="ic">📊</span> TikTok Stats</div>
+    <div class="nav" data-p="status"><span class="ic">⚙️</span> Status</div>
+    <div class="foot">SAFE mode • local only<br/>nothing uploads automatically</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <h1 id="ttl">Generate a video</h1>
+      <div class="pills" id="pills"></div>
+    </div>
+
+    <!-- GENERATE -->
+    <section class="panel show" id="p-generate">
+      <div class="card">
+        <h2>AI faceless video</h2>
+        <div class="sub">Script → narration → imagery + Ken Burns → captions → 9:16 MP4.</div>
+        <label>Topic</label>
+        <input id="g-topic" placeholder="e.g. Sejarah kopi Indonesia" />
+        <div class="row">
+          <div><label>Language</label>
+            <select id="g-lang"><option value="id">Indonesian</option><option value="en">English</option></select></div>
+          <div><label>Scenes</label><input id="g-scenes" type="number" value="5" min="3" max="8" /></div>
+          <div><label>Imagery</label>
+            <select id="g-img">
+              <option value="openverse">Openverse (free photos)</option>
+              <option value="openrouter">AI images (OpenRouter ~$0.04/img)</option>
+              <option value="placeholder">Placeholder (gradient)</option>
+            </select></div>
+        </div>
+        <button class="btn" id="g-btn" onclick="doGenerate()">✨ Generate video</button>
+        <div class="hint">Takes ~1–3 min. It lands in <b>Review</b> when done — nothing is uploaded.</div>
+      </div>
+    </section>
+
+    <!-- CLIP -->
+    <section class="panel" id="p-clip">
+      <div class="card">
+        <h2>Clip a YouTube video</h2>
+        <div class="sub">Download → pick best moments (LLM) → crop 9:16 + burn captions. Authentic footage.</div>
+        <label>YouTube URL</label>
+        <input id="c-url" placeholder="https://youtu.be/..." />
+        <div class="row">
+          <div><label>Caption language</label>
+            <select id="c-lang"><option value="id">Indonesian</option><option value="en">English</option></select></div>
+          <div><label>Clips</label><input id="c-clips" type="number" value="1" min="1" max="6" /></div>
+          <div><label>Target seconds</label><input id="c-target" type="number" value="55" min="15" max="180" /></div>
+          <div><label>Framing</label>
+            <select id="c-crop"><option value="blur">Blur fill</option><option value="fill">Center crop</option></select></div>
+        </div>
+        <button class="btn" id="c-btn" onclick="doClip()">✂️ Make clips</button>
+        <div class="hint">Use sources you're allowed to repurpose. Clips land in <b>Review</b>.</div>
+      </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="panel" id="p-review">
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+        <div><h2 style="margin:0">Review queue</h2><div class="sub" style="margin:0" id="r-count">—</div></div>
+        <div style="display:flex;gap:8px">
+          <select id="r-filter" onchange="loadQueue()" style="width:auto">
+            <option value="generated">Generated</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="uploaded">Uploaded</option>
+          </select>
+          <button class="btn ghost sm" onclick="loadQueue()">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="grid" id="r-grid"></div>
+    </section>
+
+    <!-- TIKTOK -->
+    <section class="panel" id="p-tiktok">
+      <div class="card">
+        <h2>Benchmark TikTok accounts</h2>
+        <div class="sub">Public metrics via yt-dlp — views, engagement, comparison. No login.</div>
+        <label>Accounts (@handle, space or comma separated)</label>
+        <input id="t-acc" placeholder="@khaby.lame @tiktok" />
+        <div class="row"><div><label>Videos per account</label><input id="t-limit" type="number" value="12" min="3" max="40" /></div><div></div><div></div></div>
+        <button class="btn" id="t-btn" onclick="doTiktok()">📊 Pull stats</button>
+        <div id="t-out" style="margin-top:18px"></div>
+      </div>
+    </section>
+
+    <!-- STATUS -->
+    <section class="panel" id="p-status">
+      <div class="card"><h2>Environment</h2><div class="sub">Live config & queue counts.</div>
+        <div id="s-out"><span class="spin"></span>loading…</div></div>
+    </section>
+  </main>
+
+  <!-- CONSOLE -->
+  <div class="console" id="console">
+    <div class="hd"><span>● live console</span><span id="con-when"></span></div>
+    <div id="con-body"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s), api=(u,o)=>fetch(u,o).then(r=>r.json());
+let busy=false;
+
+// nav
+document.querySelectorAll('.nav').forEach(n=>n.onclick=()=>{
+  document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));
+  n.classList.add('active');
+  const p=n.dataset.p;
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('show'));
+  $('#p-'+p).classList.add('show');
+  const titles={generate:'Generate a video',clip:'Clip a YouTube video',review:'Review queue',tiktok:'TikTok benchmark',status:'Status'};
+  $('#ttl').textContent=titles[p];
+  if(p==='review')loadQueue();
+  if(p==='status')loadStatus();
+});
+
+function toast(title,msg,kind=''){
+  const el=document.createElement('div');el.className='toast '+kind;
+  el.innerHTML=`<b>${title}</b><small>${msg||''}</small>`;
+  $('#toast').appendChild(el);setTimeout(()=>el.remove(),5200);
+}
+function setBusy(btn,on,label){btn.disabled=on;busy=on;
+  btn.innerHTML=on?`<span class="spin"></span>${label}`:btn.dataset.lbl;}
+
+// generic task poller
+async function runTask(endpoint,body,btn,label,onDone){
+  btn.dataset.lbl=btn.innerHTML;setBusy(btn,true,label);
+  try{
+    const {task,detail}=await api(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!task){toast('Error',detail||'failed','err');setBusy(btn,false);return;}
+    const poll=setInterval(async()=>{
+      const t=await api('/api/task/'+task);
+      if(t.status==='running')return;
+      clearInterval(poll);setBusy(btn,false);
+      if(t.status==='done'){onDone(t.result);}
+      else{toast('Failed',t.error||'error','err');}
+    },1500);
+  }catch(e){toast('Error',e.message,'err');setBusy(btn,false);}
+}
+
+function doGenerate(){
+  const topic=$('#g-topic').value.trim();
+  if(!topic)return toast('Topic kosong','isi dulu topiknya','err');
+  runTask('/api/generate',{topic,language:$('#g-lang').value,scenes:+$('#g-scenes').value,image_provider:$('#g-img').value},
+    $('#g-btn'),'Generating…',r=>{
+      toast('Video ready ✓',`"${r.title}" — ${r.duration?.toFixed?.(1)||r.duration}s`,'ok');
+      gotoReview();
+    });
+}
+function doClip(){
+  const url=$('#c-url').value.trim();
+  if(!url)return toast('URL kosong','paste link YouTube','err');
+  runTask('/api/clip',{url,lang:$('#c-lang').value,clips:+$('#c-clips').value,target:+$('#c-target').value,crop:$('#c-crop').value},
+    $('#c-btn'),'Clipping…',r=>{
+      toast('Clips ready ✓',`${r.clips?.length||0} clip from "${r.source_title}"`,'ok');
+      gotoReview();
+    });
+}
+function doTiktok(){
+  const accs=$('#t-acc').value.split(/[\s,]+/).filter(Boolean);
+  if(!accs.length)return toast('Akun kosong','isi minimal 1 @handle','err');
+  runTask('/api/tiktok',{accounts:accs,limit:+$('#t-limit').value},$('#t-btn'),'Fetching…',rows=>{
+    if(!rows||!rows.length){$('#t-out').innerHTML='<div class="empty">no data</div>';return;}
+    rows.sort((a,b)=>b.avg_views-a.avg_views);
+    let h='<table><tr><th>Account</th><th>Avg views</th><th>Median</th><th>Engagement</th><th>Videos</th><th>Top video</th></tr>';
+    rows.forEach(s=>{h+=`<tr><td><b>${s.account}</b></td><td>${s.avg_views.toLocaleString()}</td>
+      <td>${s.median_views.toLocaleString()}</td><td>${(s.avg_engagement*100).toFixed(2)}%</td>
+      <td>${s.videos}</td><td style="max-width:240px;color:var(--mut)">${(s.best_video.views).toLocaleString()} • ${esc(s.best_video.title).slice(0,50)}</td></tr>`;});
+    $('#t-out').innerHTML=h+'</table>';
+    toast('Stats ready ✓',`${rows.length} account(s)`,'ok');
+  });
+}
+function gotoReview(){document.querySelector('.nav[data-p=review]').click();}
+
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+async function loadQueue(){
+  const st=$('#r-filter').value;
+  const {items}=await api('/api/queue?status='+st);
+  $('#r-count').textContent=`${items.length} ${st}`;
+  const g=$('#r-grid');
+  if(!items.length){g.innerHTML='<div class="empty">Nothing here yet.</div>';return;}
+  g.innerHTML=items.map(it=>`<div class="vcard">
+    <video src="/api/video/${it.queue_id}#t=0.5" controls preload="metadata"></video>
+    <div class="body">
+      <div class="ttl">${esc(it.title)}</div>
+      <div class="meta">#${it.queue_id} • ${esc((it.caption||'').slice(0,70))}…</div>
+      <div class="tags">${esc(it.hashtags||'')}</div>
+      ${st==='generated'?`<div class="acts">
+        <button class="btn ok sm" onclick="approve(${it.queue_id})">✓ Approve</button>
+        <button class="btn dgr sm" onclick="reject(${it.queue_id})">✕ Reject</button></div>`
+       :`<div class="meta">${it.reject_reason?('reason: '+esc(it.reject_reason)):it.status}</div>`}
+    </div></div>`).join('');
+}
+async function approve(id){await fetch('/api/queue/'+id+'/approve',{method:'POST'});toast('Approved ✓','queue #'+id,'ok');loadQueue();}
+async function reject(id){const reason=prompt('Reject reason?','low quality')||'rejected';
+  await fetch('/api/queue/'+id+'/reject',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason})});
+  toast('Rejected','queue #'+id);loadQueue();}
+
+async function loadStatus(){
+  const d=await api('/api/doctor');
+  const qc=Object.entries(d.queue_counts).map(([k,v])=>`<span class="tag">${k}: ${v}</span>`).join(' ');
+  $('#s-out').innerHTML=`<table>
+    <tr><td>ffmpeg</td><td><b style="color:${d.ffmpeg?'var(--ok)':'var(--danger)'}">${d.ffmpeg?'found':'MISSING'}</b></td></tr>
+    <tr><td>LLM</td><td><b>${esc(d.llm)}</b> ${d.llm_model!=='-'?'('+esc(d.llm_model)+')':''}</td></tr>
+    <tr><td>Imagery</td><td><b>${esc(d.image_provider)}</b></td></tr>
+    <tr><td>Output</td><td><b>${d.output_spec}</b></td></tr>
+    <tr><td>Upload mode</td><td>TikTok <b>${d.tiktok_mode}</b> • YouTube <b>${d.youtube_privacy}</b></td></tr>
+    <tr><td>Queue</td><td>${qc}</td></tr></table>`;
+}
+
+// status pills + console
+async function refreshPills(){
+  try{const d=await api('/api/doctor');
+    $('#pills').innerHTML=
+      `<span class="pill ${d.ffmpeg?'ok':'bad'}">ffmpeg ${d.ffmpeg?'✓':'✕'}</span>`+
+      `<span class="pill">LLM <b>${d.llm_model!=='-'?esc(d.llm_model):'template'}</b></span>`+
+      `<span class="pill">img <b>${esc(d.image_provider)}</b></span>`+
+      `<span class="pill ok">SAFE</span>`;
+  }catch(e){}
+}
+async function refreshLogs(){
+  try{const {lines}=await api('/api/logs?tail=60');
+    const cls=l=>l.includes('| ERROR')?'err':(l.includes('| WARNING')?'warn':'');
+    $('#con-body').innerHTML=lines.map(l=>`<div class="ln ${cls(l)}">${esc(l)}</div>`).join('');
+    const c=$('#console');c.scrollTop=c.scrollHeight;
+    $('#con-when').textContent=new Date().toLocaleTimeString();
+  }catch(e){}
+}
+refreshPills();refreshLogs();loadQueue();
+setInterval(refreshLogs,2000);
+setInterval(refreshPills,15000);
+</script>
+</body>
+</html>

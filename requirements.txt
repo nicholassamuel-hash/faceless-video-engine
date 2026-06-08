@@ -25,6 +25,11 @@ google-auth-httplib2>=0.2
 # anthropic>=0.40
 # openai>=1.30
 
+# Local web dashboard (Faceless Studio)
+fastapi>=0.110
+uvicorn[standard]>=0.27
+python-multipart>=0.0.9
+
 # Dev / tests
 pytest>=8.0
 

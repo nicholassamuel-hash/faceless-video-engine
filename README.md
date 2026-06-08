@@ -23,6 +23,23 @@ uploader/          tiktok, youtube, scheduler
 main.py            CLI: generate / review / upload / doctor
 ```
 
+## Desktop app (Faceless Studio)
+
+A local web dashboard wraps everything in a visual UI — generate, clip, review
+(with inline video preview + approve/reject), and TikTok benchmarking, plus a
+live console. It runs entirely on `127.0.0.1`; nothing is exposed or uploaded.
+
+```cmd
+:: one-time: create a Desktop shortcut
+powershell -ExecutionPolicy Bypass -File scripts\create_shortcut.ps1
+
+:: then just double-click "Faceless Studio" on your Desktop, or:
+"Faceless Studio.bat"
+```
+
+It opens `http://127.0.0.1:8765/` in your browser. (Under the hood: FastAPI +
+uvicorn; `python -m webapp.launch`.)
+
 ## Prerequisites
 
 - **Python 3.11+**
