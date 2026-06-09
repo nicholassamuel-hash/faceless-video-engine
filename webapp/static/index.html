@@ -262,10 +262,11 @@ function doTiktok(){
   runTask('/api/tiktok',{accounts:accs,limit:+$('#t-limit').value},$('#t-btn'),'Fetching…',rows=>{
     if(!rows||!rows.length){$('#t-out').innerHTML='<div class="empty">no data</div>';return;}
     rows.sort((a,b)=>b.avg_views-a.avg_views);
-    let h='<table><tr><th>Account</th><th>Avg views</th><th>Median</th><th>Engagement</th><th>Videos</th><th>Top video</th></tr>';
+    let h='<table><tr><th>Account</th><th>Avg views</th><th>Engagement</th><th>Avg dur</th><th>&gt;1M</th><th>Top video</th></tr>';
     rows.forEach(s=>{h+=`<tr><td><b>${s.account}</b></td><td>${s.avg_views.toLocaleString()}</td>
-      <td>${s.median_views.toLocaleString()}</td><td>${(s.avg_engagement*100).toFixed(2)}%</td>
-      <td>${s.videos}</td><td style="max-width:240px;color:var(--mut)">${(s.best_video.views).toLocaleString()} • ${esc(s.best_video.title).slice(0,50)}</td></tr>`;});
+      <td>${(s.avg_engagement*100).toFixed(2)}%</td><td>${s.avg_duration||0}s</td>
+      <td>${s.viral_count||0}${s.viral_count?` <small style="color:var(--mut)">@${s.viral_avg_duration}s</small>`:''}</td>
+      <td style="max-width:230px;color:var(--mut)">${(s.best_video.views).toLocaleString()} • ${esc(s.best_video.title).slice(0,46)}</td></tr>`;});
     $('#t-out').innerHTML=h+'</table>';
     toast('Stats ready ✓',`${rows.length} account(s)`,'ok');
   });
