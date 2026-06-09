@@ -160,13 +160,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             if end <= start:
                 end = start + 0.05
 
-            # Active-word override: pop = bright colour + bold + a quick scale-in
-            # "pop"; highlight = just bright colour + bold.
-            if pop:
-                active_tag = (f"{{\\c{highlight_color}\\b1\\fscx100\\fscy100"
-                              f"\\t(0,90,\\fscx118\\fscy118)}}")
-            else:
-                active_tag = f"{{\\c{highlight_color}\\b1}}"
+            # Active word = bright colour + bold. We deliberately do NOT scale the
+            # active word: scaling one word reflows its neighbours every time the
+            # highlight advances, which reads as jittery/"messy" in motion. The
+            # big bold font + bright colour already gives the punchy TikTok look.
+            active_tag = f"{{\\c{highlight_color}\\b1}}"
 
             rendered = []
             for j, wd in enumerate(line):
