@@ -51,16 +51,17 @@ Each clip must:
 - start at a natural sentence start and end at a natural stop,
 - use timestamps that exist in the transcript.
 
-Also write a "hook": a 3-7 word ON-SCREEN overlay for the first 3 seconds whose
-ONLY job is to STOP THE SCROLL. Make it bold and provocative — use tension, high
-stakes, a contrarian claim, a warning, or an open curiosity loop that speaks to
-fear / greed / curiosity. It does NOT need to be a quote. Same language as the
-transcript.
-GUARDRAIL: it must stay defensible from THIS clip's actual content. Do NOT invent
-facts, numbers, events, or accusations the clip can't back up (no fake news or
-clickbait the video won't pay off) — provocative FRAMING of real content only.
-Examples for an economy-slowdown clip: "Krisis ekonomi sudah mulai?",
-"Yang kaya tahu ini duluan", "Jangan investasi sebelum lihat ini".
+Prefer moments that DELIVER a clear takeaway — an answer, insight, fix, or
+revelation — because each clip is framed as the SOLUTION to a problem.
+
+Also write a "hook": state the PROBLEM, pain, or burning question that THIS clip
+answers — the struggle/fear your target viewer already feels — so the clip becomes
+the satisfying payoff. Lead with the PROBLEM, let the video be the solution. Make
+it bold, direct, relatable, 3-7 words, same language as the transcript.
+GUARDRAIL: the clip must actually address/answer it — no bait the video can't pay
+off, and never invent facts, numbers, or events. Frame real content only.
+Examples: a clip about a common investing mistake -> "Investasimu boncos terus?";
+an economy clip -> "Takut resesi 2026?"; a discipline clip -> "Susah konsisten?".
 
 Return ONLY JSON:
 {{

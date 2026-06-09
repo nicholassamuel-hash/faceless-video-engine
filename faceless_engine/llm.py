@@ -91,11 +91,11 @@ Rules:
   leaving a glass office, an empty factory floor, suitcases at an airport gate.
 - "title": <= 80 chars, scroll-stopping but honest.
 - "hashtags": 5-8 relevant tags WITHOUT the # symbol.
-- "hook": a 3-7 word ON-SCREEN overlay for the first 3 seconds, in {lang_name},
-  whose only job is to STOP THE SCROLL. Bold and provocative — tension, high stakes,
-  a contrarian claim, a warning, or an open curiosity loop (fear / greed / curiosity).
-  NOT a literal narration line. GUARDRAIL: keep it defensible from the real topic —
-  do not invent facts, numbers, or events the video can't back up.
+- "hook": a 3-7 word ON-SCREEN overlay for the first 3 seconds, in {lang_name}.
+  State the PROBLEM, pain, or burning question your target viewer feels that this
+  video ANSWERS — lead with the problem, let the video be the solution. Bold,
+  direct, relatable. GUARDRAIL: the video must actually address it; do not invent
+  facts, numbers, or events. Examples: "Investasimu boncos terus?", "Takut resesi?".
 
 Return ONLY this JSON shape:
 {{
