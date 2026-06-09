@@ -41,6 +41,7 @@ def make_clip(
     words: list[WordTiming],
     out_path: Path,
     settings: Settings | None = None,
+    hook: str | None = None,
 ) -> Path:
     """Produce one 9:16 captioned clip from [start, end] of the source video."""
     settings = settings or get_settings()
@@ -54,9 +55,10 @@ def make_clip(
 
     with tempfile.TemporaryDirectory(prefix="fe_clip_") as tmp:
         # Build the video filter graph, optionally appending the caption burn.
-        if words:
+        use_hook = hook if settings.hook_enabled else None
+        if words or use_hook:
             subs_path = Path(tmp) / "clip.ass"
-            captions_mod.build_ass(words, subs_path, settings=settings)
+            captions_mod.build_ass(words, subs_path, settings=settings, hook=use_hook)
             esc = _escape_filter_path(subs_path)
             filtergraph = f"{chain};[base]ass='{esc}'[v]"
         else:

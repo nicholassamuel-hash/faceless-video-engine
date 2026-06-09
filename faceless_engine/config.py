@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     # Caption look: "pop" (TikTok-style, 2-3 big words, active word pops) or
     # "highlight" (calmer phrase with the active word recolored).
     caption_style: Literal["pop", "highlight"] = Field(default="pop", alias="FE_CAPTION_STYLE")
+    # Scroll-stopping hook overlay shown at the top for the first N seconds.
+    hook_enabled: bool = Field(default=True, alias="FE_HOOK_ENABLED")
+    hook_seconds: float = Field(default=2.8, alias="FE_HOOK_SECONDS")
 
     # --- Clipping (YouTube -> Shorts) --------------------------------------
     # Defaults tuned from research: viral TikTok clips cluster at ~60s.

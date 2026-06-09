@@ -25,6 +25,7 @@ class Highlight:
     title: str
     hashtags: list[str] = field(default_factory=list)
     reason: str = ""
+    hook: str = ""  # scroll-stopping on-screen opener (not a literal quote)
 
     @property
     def duration(self) -> float:
@@ -50,11 +51,18 @@ Each clip must:
 - start at a natural sentence start and end at a natural stop,
 - use timestamps that exist in the transcript.
 
+Also write a "hook": a 3-8 word scroll-stopping ON-SCREEN text overlay for the
+first 3 seconds. It must be thematically related to the clip but framed more
+dramatically than the literal content — a bold claim, alarming question, or
+curiosity gap. It does NOT need to be a quote from the video. Same language as
+the transcript. Example: a clip about the economy slowing -> "Indonesia di ambang
+krisis?" or "Ini baru awal dari kehancuran".
+
 Return ONLY JSON:
 {{
   "clips": [
     {{"start": <sec>, "end": <sec>, "title": "punchy <=80 char title",
-      "hashtags": ["tag1","tag2"], "reason": "why it pops"}}
+      "hook": "3-8 word dramatic hook", "hashtags": ["tag1","tag2"], "reason": "why it pops"}}
   ]
 }}
 
@@ -161,6 +169,7 @@ def select_highlights(
                     title=str(c.get("title", "Clip"))[:120],
                     hashtags=[str(h).lstrip("#") for h in c.get("hashtags", [])],
                     reason=str(c.get("reason", "")),
+                    hook=str(c.get("hook", ""))[:80],
                 )
             )
         clips = [c for c in clips if c.duration >= min(lo, total_duration) * 0.5]

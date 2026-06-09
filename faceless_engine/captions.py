@@ -70,6 +70,8 @@ def build_ass(
     settings: Settings | None = None,
     *,
     style: str | None = None,
+    hook: str | None = None,
+    hook_seconds: float | None = None,
     max_words_per_line: int | None = None,
     max_chars_per_line: int | None = None,
     font: str = "Arial",
@@ -85,7 +87,7 @@ def build_ass(
     """
     settings = settings or get_settings()
     words = [w for w in words if w.word and w.word.strip()]
-    if not words:
+    if not words and not (hook and hook.strip()):
         raise ValueError("build_ass: no word timings provided")
 
     out_path = Path(out_path)
@@ -106,6 +108,30 @@ def build_ass(
     margin_lr = int(w * 0.06)
     outline = 5 if pop else 4
 
+    # Optional scroll-stopping hook overlay (boxed headline near the top).
+    style_lines = [
+        f"Style: Default,{font},{font_size},{base_color},{base_color},{outline_color},"
+        f"&H64000000,-1,0,0,0,100,100,0,0,1,{outline},2,2,{margin_lr},{margin_lr},{margin_v},1"
+    ]
+    hook = (hook or "").strip()
+    hook_events: list[str] = []
+    if hook:
+        hook_seconds = settings.hook_seconds if hook_seconds is None else hook_seconds
+        hook_fs = max(48, int(h * 0.052))
+        hook_mv = int(h * 0.14)
+        hook_lr = int(w * 0.08)
+        # BorderStyle 3 = opaque box (BackColour); ~75% black box, white bold text,
+        # top-centre (alignment 8) so it never collides with bottom captions.
+        style_lines.append(
+            f"Style: Hook,{font},{hook_fs},&H00FFFFFF,&H00FFFFFF,&H00000000,"
+            f"&HBF000000,-1,0,0,0,100,100,0,0,3,3,0,8,{hook_lr},{hook_lr},{hook_mv},1"
+        )
+        hook_text = "{\\fad(150,250)}" + _ass_escape(hook)
+        hook_events.append(
+            f"Dialogue: 1,{_fmt_time(0)},{_fmt_time(max(0.8, hook_seconds))},Hook,,0,0,0,,{hook_text}"
+        )
+
+    styles_block = "\n".join(style_lines)
     header = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: {w}
@@ -115,13 +141,13 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font},{font_size},{base_color},{base_color},{outline_color},&H64000000,-1,0,0,0,100,100,0,0,1,{outline},2,2,{margin_lr},{margin_lr},{margin_v},1
+{styles_block}
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
 
-    events: list[str] = []
+    events: list[str] = list(hook_events)
     lines = _group_lines(words, max_chars_per_line, max_words_per_line)
     for line in lines:
         line_start = line[0].start

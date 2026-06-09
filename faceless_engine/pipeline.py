@@ -163,8 +163,9 @@ def run_pipeline(
         # 5. Captions -----------------------------------------------------
         subs_path = job_dir / "captions.ass"
         if all_words:
+            hook = script.hook if settings.hook_enabled else None
             with bench.stage("captions"):
-                captions_mod.build_ass(all_words, subs_path, settings=settings)
+                captions_mod.build_ass(all_words, subs_path, settings=settings, hook=hook)
             db.record_asset(job_id, "subtitles", str(subs_path))
         else:
             subs_path = None

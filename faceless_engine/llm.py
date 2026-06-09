@@ -34,6 +34,7 @@ class Script:
     hashtags: list[str]
     scenes: list[Scene]
     language: str = "id"
+    hook: str = ""  # scroll-stopping on-screen opener for the first seconds
 
     @property
     def full_text(self) -> str:
@@ -90,11 +91,15 @@ Rules:
   leaving a glass office, an empty factory floor, suitcases at an airport gate.
 - "title": <= 80 chars, scroll-stopping but honest.
 - "hashtags": 5-8 relevant tags WITHOUT the # symbol.
+- "hook": a 3-8 word ON-SCREEN text overlay for the first 3 seconds, in {lang_name}.
+  Thematically related but framed dramatically (bold claim / alarming question /
+  curiosity gap) — NOT a literal line from the narration.
 
 Return ONLY this JSON shape:
 {{
   "title": "...",
   "description": "...",
+  "hook": "3-8 word dramatic hook",
   "hashtags": ["...", "..."],
   "scenes": [
     {{"text": "spoken line in {lang_name}", "image_query": "english keywords", "image_prompt": "english visual"}}
@@ -125,6 +130,7 @@ def _script_from_json(raw: str, language: str, fallback_topic: str) -> Script:
         hashtags=[str(h).lstrip("#").strip() for h in data.get("hashtags", []) if str(h).strip()],
         scenes=scenes,
         language=language,
+        hook=str(data.get("hook", "")).strip()[:80],
     )
 
 
@@ -225,10 +231,12 @@ class TemplateLLMProvider(LLMProvider):
         scenes.append(Scene(num_scenes - 1, random.choice(self._CTA[lang]).format(topic=topic),
                             f"bold closing visual about {topic}", topic))
 
+        hook = {"en": f"The truth about {topic}",
+                "id": f"Fakta mengejutkan soal {topic}"}.get(lang, topic)
         log.info("TemplateLLM generated %d scenes for %r (%s, keyless fallback)",
                  len(scenes), topic, lang)
         return Script(title=topic[:80], description=scenes[0].text,
-                      hashtags=self._TAGS[lang], scenes=scenes, language=lang)
+                      hashtags=self._TAGS[lang], scenes=scenes, language=lang, hook=hook[:80])
 
 
 # Backwards-compatible alias.

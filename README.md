@@ -143,6 +143,12 @@ CLI flags (override `.env` for that run): `--lang` (caption language), `--clips`
 Short LLM picks are auto-extended toward `--target`, snapped to caption-word
 boundaries, so clips land at a consistent length.
 
+**Hooks** — each clip (and faceless video) gets an LLM-written scroll-stopping
+**hook overlay** shown as a boxed headline for the first few seconds: thematically
+related but framed dramatically (a bold claim / alarming question), not a literal
+quote. Toggle with `FE_HOOK_ENABLED`, duration via `FE_HOOK_SECONDS`; caption
+look via `FE_CAPTION_STYLE` (`pop` TikTok-style / `highlight`).
+
 - Uses **yt-dlp** (installed via requirements) + ffmpeg. No extra keys for the
   download/caption/cut steps; highlight selection uses your `LLM_API_KEY`.
 - Framing `FE_CLIP_CROP_MODE`: `blur` (fit + blurred fill, default) or `fill`

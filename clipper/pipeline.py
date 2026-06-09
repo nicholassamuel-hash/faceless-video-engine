@@ -70,7 +70,8 @@ def run_clip_pipeline(url: str, *, settings: Settings | None = None) -> dict:
             out_path = out_dir / f"clip_{src_job_id:05d}_{i:02d}.mp4"
             with bench.stage("cut"):
                 crop_mod.make_clip(
-                    src.video_path, hl.start, hl.end, clip_words, out_path, settings=settings
+                    src.video_path, hl.start, hl.end, clip_words, out_path,
+                    settings=settings, hook=hl.hook,
                 )
             caption_text = " ".join(w.word for w in clip_words)
             tags = hl.hashtags or ["shorts", "fyp", "clip"]
