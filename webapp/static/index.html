@@ -126,6 +126,11 @@
               <option value="openrouter">AI images (OpenRouter ~$0.04/img)</option>
               <option value="placeholder">Placeholder (gradient)</option>
             </select></div>
+          <div><label>Captions</label>
+            <select id="g-cap">
+              <option value="pop">Pop (TikTok)</option>
+              <option value="highlight">Highlight (calm)</option>
+            </select></div>
         </div>
         <button class="btn" id="g-btn" onclick="doGenerate()">✨ Generate video</button>
         <div class="hint">Takes ~1–3 min. It lands in <b>Review</b> when done — nothing is uploaded.</div>
@@ -146,6 +151,8 @@
           <div><label>Target seconds</label><input id="c-target" type="number" value="58" min="15" max="180" /></div>
           <div><label>Framing</label>
             <select id="c-crop"><option value="blur">Blur fill</option><option value="fill">Center crop</option></select></div>
+          <div><label>Captions</label>
+            <select id="c-cap"><option value="pop">Pop (TikTok)</option><option value="highlight">Highlight</option></select></div>
         </div>
         <button class="btn" id="c-btn" onclick="doClip()">✂️ Make clips</button>
         <div class="hint">Use sources you're allowed to repurpose. Clips land in <b>Review</b>.</div>
@@ -241,7 +248,7 @@ async function runTask(endpoint,body,btn,label,onDone){
 function doGenerate(){
   const topic=$('#g-topic').value.trim();
   if(!topic)return toast('Topic kosong','isi dulu topiknya','err');
-  runTask('/api/generate',{topic,language:$('#g-lang').value,scenes:+$('#g-scenes').value,image_provider:$('#g-img').value},
+  runTask('/api/generate',{topic,language:$('#g-lang').value,scenes:+$('#g-scenes').value,image_provider:$('#g-img').value,caption_style:$('#g-cap').value},
     $('#g-btn'),'Generating…',r=>{
       toast('Video ready ✓',`"${r.title}" — ${r.duration?.toFixed?.(1)||r.duration}s`,'ok');
       gotoReview();
@@ -250,7 +257,7 @@ function doGenerate(){
 function doClip(){
   const url=$('#c-url').value.trim();
   if(!url)return toast('URL kosong','paste link YouTube','err');
-  runTask('/api/clip',{url,lang:$('#c-lang').value,clips:+$('#c-clips').value,target:+$('#c-target').value,crop:$('#c-crop').value},
+  runTask('/api/clip',{url,lang:$('#c-lang').value,clips:+$('#c-clips').value,target:+$('#c-target').value,crop:$('#c-crop').value,caption_style:$('#c-cap').value},
     $('#c-btn'),'Clipping…',r=>{
       toast('Clips ready ✓',`${r.clips?.length||0} clip from "${r.source_title}"`,'ok');
       gotoReview();

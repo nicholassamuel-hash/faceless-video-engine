@@ -94,6 +94,14 @@ class Settings(BaseSettings):
     tiktok_max_per_day: int = Field(default=3, alias="FE_TIKTOK_MAX_PER_DAY")
     youtube_max_per_day: int = Field(default=5, alias="FE_YOUTUBE_MAX_PER_DAY")
 
+    # --- TikTok benchmark scraping (yt-dlp) --------------------------------
+    # TikTok's account-listing is flaky in yt-dlp; using your logged-in session
+    # makes it reliable. Set a browser to read cookies from ("edge"/"chrome"/
+    # "firefox" — the browser must be CLOSED on Windows so its cookie DB unlocks),
+    # OR point to an exported Netscape cookies.txt (works while the browser runs).
+    tiktok_cookies_browser: str = Field(default="", alias="FE_TIKTOK_COOKIES_BROWSER")
+    tiktok_cookies_file: Path | str = Field(default="", alias="FE_TIKTOK_COOKIES_FILE")
+
     # --- Platform credentials ---------------------------------------------
     tiktok_access_token: str = Field(default="", alias="TIKTOK_ACCESS_TOKEN")
     youtube_client_secrets: Path = Field(

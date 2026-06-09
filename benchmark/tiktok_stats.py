@@ -11,7 +11,19 @@ from datetime import datetime, timezone
 
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
+from faceless_engine.config import get_settings
+
 log = logging.getLogger(__name__)
+
+
+def _cookie_args() -> list[str]:
+    """yt-dlp cookie args from config (browser session or cookies.txt file)."""
+    s = get_settings()
+    if s.tiktok_cookies_file and str(s.tiktok_cookies_file).strip():
+        return ["--cookies", str(s.tiktok_cookies_file)]
+    if s.tiktok_cookies_browser.strip():
+        return ["--cookies-from-browser", s.tiktok_cookies_browser.strip()]
+    return []
 
 
 class StatsError(RuntimeError):
@@ -70,6 +82,7 @@ def normalize_target(target: str) -> tuple[str, str]:
 def _dump_json(url: str, limit: int) -> dict:
     cmd = [
         sys.executable, "-m", "yt_dlp", "-J", "--no-warnings",
+        *_cookie_args(),
         "--playlist-end", str(limit), url,
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", timeout=180)

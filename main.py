@@ -161,16 +161,23 @@ def cmd_tiktok_stats(args: argparse.Namespace) -> int:
     from benchmark import tiktok_stats as tt
     from shared import db
 
-    db.init_db(get_settings())
+    settings = get_settings()
+    if args.cookies_browser:
+        settings.tiktok_cookies_browser = args.cookies_browser
+    if args.cookies_file:
+        settings.tiktok_cookies_file = args.cookies_file
+    db.init_db(settings)
     now = datetime.now(timezone.utc)
     threshold = args.min_views
     summaries = []
     raw_by_account: dict[str, list] = {}
+    failures = 0
     for target in args.accounts:
         try:
             stats = tt.fetch_account(target, limit=args.limit)
         except Exception as exc:
-            print(f"  ! failed to fetch {target}: {exc}")
+            failures += 1
+            print(f"  ! failed to fetch {target}: {str(exc)[:120]}")
             continue
         if not stats:
             print(f"  ! no public videos found for {target}")
@@ -206,6 +213,12 @@ def cmd_tiktok_stats(args: argparse.Namespace) -> int:
         for s in sorted(summaries, key=lambda x: x["avg_views"], reverse=True):
             print(f"  {s['account']:<24} {s['avg_views']:>12,} "
                   f"{s['avg_engagement'] * 100:>10.2f}% {s['avg_duration']:>7}s {s['viral_count']:>6}")
+
+    if failures and not (args.cookies_browser or args.cookies_file):
+        print("\n  TIP: TikTok account listing is flaky in yt-dlp. For reliable data,"
+              "\n   - pass specific VIDEO URLs instead of @handles, or"
+              "\n   - use your login: --cookies-browser edge (close the browser first),"
+              "\n     or --cookies-file cookies.txt (export from a browser extension).")
 
     # What does >threshold-view content look like? (clipping research)
     research = tt.research_viral(raw_by_account, viral_threshold=threshold)
@@ -302,6 +315,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_tt.add_argument("--limit", type=int, default=20, help="videos per account (default 20)")
     p_tt.add_argument("--min-views", type=int, default=1_000_000,
                       help="viral threshold for research (default 1,000,000)")
+    p_tt.add_argument("--cookies-browser", default=None,
+                      help="read TikTok cookies from a browser (edge/chrome/firefox; close it first)")
+    p_tt.add_argument("--cookies-file", default=None, help="path to a Netscape cookies.txt")
     p_tt.set_defaults(func=cmd_tiktok_stats)
 
     p_doc = sub.add_parser("doctor", help="check environment & config")

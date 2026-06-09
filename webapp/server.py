@@ -105,6 +105,7 @@ class GenerateReq(BaseModel):
     language: str = "id"
     scenes: int = 5
     image_provider: str | None = None
+    caption_style: str | None = None
 
 
 class ClipReq(BaseModel):
@@ -113,6 +114,7 @@ class ClipReq(BaseModel):
     clips: int = 1
     target: int = 58
     crop: str = "blur"
+    caption_style: str | None = None
 
 
 class TikTokReq(BaseModel):
@@ -134,6 +136,8 @@ def api_generate(req: GenerateReq) -> dict:
     s = get_settings()
     if req.image_provider:
         s.image_provider = req.image_provider
+    if req.caption_style:
+        s.caption_style = req.caption_style
 
     def job():
         return run_pipeline(req.topic, language=req.language, num_scenes=req.scenes, settings=s)
@@ -152,6 +156,8 @@ def api_clip(req: ClipReq) -> dict:
     s.clips_per_video = req.clips
     s.clip_target_seconds = req.target
     s.clip_crop_mode = req.crop
+    if req.caption_style:
+        s.caption_style = req.caption_style
 
     def job():
         return run_clip_pipeline(req.url, settings=s)
