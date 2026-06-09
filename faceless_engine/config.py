@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     fps: int = Field(default=30, alias="FE_FPS")
     min_seconds: int = Field(default=30, alias="FE_MIN_SECONDS")
     max_seconds: int = Field(default=50, alias="FE_MAX_SECONDS")
+    # Caption look: "pop" (TikTok-style, 2-3 big words, active word pops) or
+    # "highlight" (calmer phrase with the active word recolored).
+    caption_style: Literal["pop", "highlight"] = Field(default="pop", alias="FE_CAPTION_STYLE")
 
     # --- Clipping (YouTube -> Shorts) --------------------------------------
     # Defaults tuned from research: viral TikTok clips cluster at ~60s.

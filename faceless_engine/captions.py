@@ -69,8 +69,9 @@ def build_ass(
     out_path: Path,
     settings: Settings | None = None,
     *,
-    max_words_per_line: int = 6,
-    max_chars_per_line: int = 20,
+    style: str | None = None,
+    max_words_per_line: int | None = None,
+    max_chars_per_line: int | None = None,
     font: str = "Arial",
     base_color: str = "&H00FFFFFF",  # white  (AABBGGRR)
     highlight_color: str = "&H0000F0FF",  # bright yellow
@@ -91,11 +92,19 @@ def build_ass(
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     w, h = settings.width, settings.height
-    # Font size and bottom margin scaled to the canvas height.
-    font_size = max(40, int(h * 0.042))
-    margin_v = int(h * 0.20)
-    # Side margins keep text off the edges; max_chars is sized to never overflow.
-    margin_lr = int(w * 0.07)
+    style = (style or settings.caption_style or "pop").lower()
+    pop = style == "pop"
+
+    # "pop" = bigger font, fewer words on screen (punchy TikTok look);
+    # "highlight" = calmer, more words, smaller.
+    if max_words_per_line is None:
+        max_words_per_line = 3 if pop else 6
+    if max_chars_per_line is None:
+        max_chars_per_line = 16 if pop else 20
+    font_size = max(40, int(h * (0.058 if pop else 0.042)))
+    margin_v = int(h * (0.16 if pop else 0.20))
+    margin_lr = int(w * 0.06)
+    outline = 5 if pop else 4
 
     header = f"""[Script Info]
 ScriptType: v4.00+
@@ -106,7 +115,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font},{font_size},{base_color},{base_color},{outline_color},&H64000000,-1,0,0,0,100,100,0,0,1,4,2,2,{margin_lr},{margin_lr},{margin_v},1
+Style: Default,{font},{font_size},{base_color},{base_color},{outline_color},&H64000000,-1,0,0,0,100,100,0,0,1,{outline},2,2,{margin_lr},{margin_lr},{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -125,11 +134,19 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             if end <= start:
                 end = start + 0.05
 
+            # Active-word override: pop = bright colour + bold + a quick scale-in
+            # "pop"; highlight = just bright colour + bold.
+            if pop:
+                active_tag = (f"{{\\c{highlight_color}\\b1\\fscx100\\fscy100"
+                              f"\\t(0,90,\\fscx118\\fscy118)}}")
+            else:
+                active_tag = f"{{\\c{highlight_color}\\b1}}"
+
             rendered = []
             for j, wd in enumerate(line):
                 token = _ass_escape(wd.word.strip())
                 if j == i:
-                    rendered.append(f"{{\\c{highlight_color}\\b1}}{token}{{\\r}}")
+                    rendered.append(f"{active_tag}{token}{{\\r}}")
                 else:
                     rendered.append(token)
             text = " ".join(rendered)
