@@ -163,7 +163,9 @@ def cmd_tiktok_stats(args: argparse.Namespace) -> int:
 
     db.init_db(get_settings())
     now = datetime.now(timezone.utc)
+    threshold = args.min_views
     summaries = []
+    raw_by_account: dict[str, list] = {}
     for target in args.accounts:
         try:
             stats = tt.fetch_account(target, limit=args.limit)
@@ -174,7 +176,8 @@ def cmd_tiktok_stats(args: argparse.Namespace) -> int:
             print(f"  ! no public videos found for {target}")
             continue
         db.store_tiktok_stats([s.as_row() for s in stats])
-        summary = tt.summarize(stats)
+        raw_by_account[target] = stats
+        summary = tt.summarize(stats, viral_threshold=threshold)
         summaries.append(summary)
 
         acct = summary["account"]
@@ -182,9 +185,13 @@ def cmd_tiktok_stats(args: argparse.Namespace) -> int:
         print(f"  avg views      : {summary['avg_views']:,}")
         print(f"  median views   : {summary['median_views']:,}")
         print(f"  avg engagement : {summary['avg_engagement'] * 100:.2f}%")
-        print(f"  total views    : {summary['total_views']:,}")
-        bv = summary["best_video"]
-        print(f"  top video      : {bv['views']:,} views | {bv['title'][:60]}")
+        print(f"  avg duration   : {summary['avg_duration']}s")
+        print(f"  >{threshold:,} views: {summary['viral_count']} clip(s)"
+              + (f", avg {summary['viral_avg_duration']}s, "
+                 f"{summary['viral_avg_engagement'] * 100:.2f}% eng"
+                 if summary['viral_count'] else ""))
+        for v in summary["viral"]:
+            print(f"      {v['views']:>10,} | {v['duration']:>3}s | {v['title'][:50]}")
 
         prev = db.previous_account_avg(acct, now)
         if prev:
@@ -195,10 +202,21 @@ def cmd_tiktok_stats(args: argparse.Namespace) -> int:
 
     if len(summaries) > 1:
         print("\n=== Comparison (by avg views) ===")
-        print(f"  {'account':<24} {'avg views':>12} {'engagement':>11} {'videos':>7}")
+        print(f"  {'account':<24} {'avg views':>12} {'engagement':>11} {'avg dur':>8} {'viral':>6}")
         for s in sorted(summaries, key=lambda x: x["avg_views"], reverse=True):
             print(f"  {s['account']:<24} {s['avg_views']:>12,} "
-                  f"{s['avg_engagement'] * 100:>10.2f}% {s['videos']:>7}")
+                  f"{s['avg_engagement'] * 100:>10.2f}% {s['avg_duration']:>7}s {s['viral_count']:>6}")
+
+    # What does >threshold-view content look like? (clipping research)
+    research = tt.research_viral(raw_by_account, viral_threshold=threshold)
+    if research.get("viral_count"):
+        print(f"\n=== Viral research (>{threshold:,} views, {research['viral_count']} clips) ===")
+        print(f"  median duration : {research['median_duration']}s "
+              f"(avg {research['avg_duration']}s)  |  avg engagement {research['avg_engagement'] * 100:.2f}%")
+        print("  duration mix    : " + "  ".join(f"{k}={v}" for k, v in research["duration_buckets"].items()))
+        print("  top viral clips :")
+        for t in research["top"]:
+            print(f"      {t['views']:>10,} | {t['duration']:>3}s | {t['account']:<20} | {t['title'][:42]}")
     return 0
 
 
@@ -282,6 +300,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_tt = sub.add_parser("tiktok-stats", help="benchmark public TikTok account metrics")
     p_tt.add_argument("accounts", nargs="+", help="@handles or TikTok URLs to benchmark")
     p_tt.add_argument("--limit", type=int, default=20, help="videos per account (default 20)")
+    p_tt.add_argument("--min-views", type=int, default=1_000_000,
+                      help="viral threshold for research (default 1,000,000)")
     p_tt.set_defaults(func=cmd_tiktok_stats)
 
     p_doc = sub.add_parser("doctor", help="check environment & config")

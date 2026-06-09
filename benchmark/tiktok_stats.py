@@ -110,13 +110,17 @@ def fetch_account(target: str, limit: int = 20) -> list[VideoStat]:
     return stats
 
 
-def summarize(stats: list[VideoStat]) -> dict:
-    """Aggregate metrics for a set of a single account's videos."""
+def summarize(stats: list[VideoStat], viral_threshold: int = 1_000_000) -> dict:
+    """Aggregate metrics for a single account's videos, incl. viral/duration cuts."""
     if not stats:
         return {}
     views = [s.views for s in stats]
     eng = [s.engagement_rate for s in stats]
+    durs = [s.duration for s in stats if s.duration]
     top = max(stats, key=lambda s: s.views)
+    viral = sorted([s for s in stats if s.views >= viral_threshold],
+                   key=lambda s: s.views, reverse=True)
+    viral_durs = [s.duration for s in viral if s.duration]
     return {
         "account": stats[0].account,
         "videos": len(stats),
@@ -124,5 +128,40 @@ def summarize(stats: list[VideoStat]) -> dict:
         "avg_views": int(statistics.mean(views)),
         "median_views": int(statistics.median(views)),
         "avg_engagement": round(statistics.mean(eng), 4),
+        "avg_duration": int(statistics.mean(durs)) if durs else 0,
+        "viral_count": len(viral),
+        "viral_avg_duration": int(statistics.mean(viral_durs)) if viral_durs else 0,
+        "viral_avg_engagement": round(statistics.mean([s.engagement_rate for s in viral]), 4) if viral else 0,
         "best_video": {"title": top.title, "views": top.views, "url": top.url},
+        "viral": [{"views": s.views, "duration": s.duration, "engagement": s.engagement_rate,
+                   "title": s.title, "url": s.url} for s in viral[:5]],
+    }
+
+
+def research_viral(stats_by_account: dict[str, list[VideoStat]],
+                   viral_threshold: int = 1_000_000) -> dict:
+    """Cross-account analysis of what >threshold-view clips look like.
+
+    Returns duration distribution and engagement of viral clips pooled across
+    all accounts — the 'what works' picture for a clipping strategy.
+    """
+    viral: list[VideoStat] = []
+    for stats in stats_by_account.values():
+        viral.extend(s for s in stats if s.views >= viral_threshold)
+    if not viral:
+        return {"viral_count": 0}
+    durs = sorted(s.duration for s in viral if s.duration)
+    buckets = {"0-20s": 0, "20-40s": 0, "40-60s": 0, "60-90s": 0, "90s+": 0}
+    for d in durs:
+        key = ("0-20s" if d < 20 else "20-40s" if d < 40 else "40-60s" if d < 60
+               else "60-90s" if d < 90 else "90s+")
+        buckets[key] += 1
+    return {
+        "viral_count": len(viral),
+        "median_duration": int(statistics.median(durs)) if durs else 0,
+        "avg_duration": int(statistics.mean(durs)) if durs else 0,
+        "duration_buckets": buckets,
+        "avg_engagement": round(statistics.mean([s.engagement_rate for s in viral]), 4),
+        "top": [{"views": s.views, "duration": s.duration, "account": s.account,
+                 "title": s.title} for s in sorted(viral, key=lambda x: x.views, reverse=True)[:10]],
     }

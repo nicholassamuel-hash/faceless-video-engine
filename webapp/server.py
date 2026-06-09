@@ -111,7 +111,7 @@ class ClipReq(BaseModel):
     url: str
     lang: str = "id"
     clips: int = 1
-    target: int = 55
+    target: int = 58
     crop: str = "blur"
 
 

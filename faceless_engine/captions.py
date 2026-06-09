@@ -34,8 +34,34 @@ def _ass_escape(text: str) -> str:
     return text.replace("\\", r"\\").replace("{", r"\{").replace("}", r"\}")
 
 
-def _chunk(words: list[WordTiming], max_per_line: int) -> list[list[WordTiming]]:
-    return [words[i : i + max_per_line] for i in range(0, len(words), max_per_line)]
+def _group_lines(
+    words: list[WordTiming], max_chars: int, max_words: int
+) -> list[list[WordTiming]]:
+    """Group words into readable lines.
+
+    Breaks on a character budget (so long words never overflow the frame) and
+    on sentence-ending punctuation (so lines read as natural phrases instead of
+    arbitrary fixed-size chunks). This is what keeps captions from looking messy
+    on dense, fast speech (e.g. clipped podcasts).
+    """
+    lines: list[list[WordTiming]] = []
+    cur: list[WordTiming] = []
+    length = 0
+    for w in words:
+        token = w.word.strip()
+        add = len(token) + (1 if cur else 0)
+        if cur and (length + add > max_chars or len(cur) >= max_words):
+            lines.append(cur)
+            cur, length = [], 0
+            add = len(token)
+        cur.append(w)
+        length += add
+        if token[-1:] in ".!?…":  # natural sentence break
+            lines.append(cur)
+            cur, length = [], 0
+    if cur:
+        lines.append(cur)
+    return lines
 
 
 def build_ass(
@@ -43,7 +69,8 @@ def build_ass(
     out_path: Path,
     settings: Settings | None = None,
     *,
-    max_words_per_line: int = 4,
+    max_words_per_line: int = 6,
+    max_chars_per_line: int = 20,
     font: str = "Arial",
     base_color: str = "&H00FFFFFF",  # white  (AABBGGRR)
     highlight_color: str = "&H0000F0FF",  # bright yellow
@@ -65,26 +92,28 @@ def build_ass(
 
     w, h = settings.width, settings.height
     # Font size and bottom margin scaled to the canvas height.
-    font_size = max(40, int(h * 0.045))
-    margin_v = int(h * 0.18)
+    font_size = max(40, int(h * 0.042))
+    margin_v = int(h * 0.20)
+    # Side margins keep text off the edges; max_chars is sized to never overflow.
+    margin_lr = int(w * 0.07)
 
     header = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: {w}
 PlayResY: {h}
-WrapStyle: 2
+WrapStyle: 0
 ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font},{font_size},{base_color},{base_color},{outline_color},&H64000000,-1,0,0,0,100,100,0,0,1,4,2,2,60,60,{margin_v},1
+Style: Default,{font},{font_size},{base_color},{base_color},{outline_color},&H64000000,-1,0,0,0,100,100,0,0,1,4,2,2,{margin_lr},{margin_lr},{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
 
     events: list[str] = []
-    lines = _chunk(words, max_words_per_line)
+    lines = _group_lines(words, max_chars_per_line, max_words_per_line)
     for line in lines:
         line_start = line[0].start
         line_end = line[-1].end

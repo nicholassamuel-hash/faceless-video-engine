@@ -41,8 +41,9 @@ class Settings(BaseSettings):
     max_seconds: int = Field(default=50, alias="FE_MAX_SECONDS")
 
     # --- Clipping (YouTube -> Shorts) --------------------------------------
-    clip_target_seconds: int = Field(default=55, alias="FE_CLIP_TARGET_SECONDS")
-    clip_min_seconds: int = Field(default=40, alias="FE_CLIP_MIN_SECONDS")
+    # Defaults tuned from research: viral TikTok clips cluster at ~60s.
+    clip_target_seconds: int = Field(default=58, alias="FE_CLIP_TARGET_SECONDS")
+    clip_min_seconds: int = Field(default=42, alias="FE_CLIP_MIN_SECONDS")
     clip_max_seconds: int = Field(default=75, alias="FE_CLIP_MAX_SECONDS")
     clips_per_video: int = Field(default=1, alias="FE_CLIPS_PER_VIDEO")
     # "blur" = fit width + blurred fill (keeps whole frame, pro look);
