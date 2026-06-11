@@ -25,11 +25,23 @@ class Highlight:
     title: str
     hashtags: list[str] = field(default_factory=list)
     reason: str = ""
-    hook: str = ""  # scroll-stopping on-screen opener (not a literal quote)
+    hook: str = ""  # primary scroll-stopping opener (= hooks[0] when present)
+    hooks: list[str] = field(default_factory=list)  # A/B variants, distinct styles
+    score: float | None = None  # virality score (clipper.score), None = unscored
+    score_reason: str = ""
 
     @property
     def duration(self) -> float:
         return max(0.0, self.end - self.start)
+
+    def hook_variants(self, n: int) -> list[str]:
+        """Up to n distinct hooks to render (always at least one entry)."""
+        pool = [h for h in (self.hooks or [self.hook]) if h] or [""]
+        seen: list[str] = []
+        for h in pool:
+            if h not in seen:
+                seen.append(h)
+        return seen[: max(1, n)]
 
 
 _SYSTEM = (
@@ -54,20 +66,23 @@ Each clip must:
 Prefer moments that DELIVER a clear takeaway — an answer, insight, fix, or
 revelation — because each clip is framed as the SOLUTION to a problem.
 
-Also write a "hook": state the PROBLEM, pain, or burning question that THIS clip
-answers — the struggle/fear your target viewer already feels — so the clip becomes
-the satisfying payoff. Lead with the PROBLEM, let the video be the solution. Make
-it bold, direct, relatable, 3-7 words, same language as the transcript.
-GUARDRAIL: the clip must actually address/answer it — no bait the video can't pay
-off, and never invent facts, numbers, or events. Frame real content only.
-Examples: a clip about a common investing mistake -> "Investasimu boncos terus?";
-an economy clip -> "Takut resesi 2026?"; a discipline clip -> "Susah konsisten?".
+Also write "hooks": THREE distinct on-screen opener variants for A/B testing,
+each 3-8 words, same language as the transcript, in this exact style order:
+1. PROBLEM-FIRST: the pain or burning question this clip answers — the
+   struggle/fear the viewer already feels (clip = the satisfying payoff).
+2. CURIOSITY GAP: tease the payoff without revealing it.
+3. BOLD CLAIM: the strongest TRUE statement the clip actually supports.
+GUARDRAIL (all variants): the clip must actually address/answer it — no bait
+the video can't pay off, and never invent facts, numbers, or events. Frame real
+content only. Examples (problem-first): investing-mistake clip ->
+"Investasimu boncos terus?"; economy clip -> "Takut resesi 2026?".
 
 Return ONLY JSON:
 {{
   "clips": [
     {{"start": <sec>, "end": <sec>, "title": "punchy <=80 char title",
-      "hook": "3-8 word dramatic hook", "hashtags": ["tag1","tag2"], "reason": "why it pops"}}
+      "hooks": ["problem-first", "curiosity gap", "bold claim"],
+      "hashtags": ["tag1","tag2"], "reason": "why it pops"}}
   ]
 }}
 
@@ -139,7 +154,8 @@ def select_highlights(
     settings: Settings | None = None,
 ) -> list[Highlight]:
     settings = settings or get_settings()
-    n = max(1, settings.clips_per_video)
+    # Over-generate so clipper.score can rank candidates and keep the best.
+    n = max(1, settings.clips_per_video, settings.clip_candidates)
     target = settings.clip_target_seconds
     lo, hi = settings.clip_min_seconds, settings.clip_max_seconds
 
@@ -167,6 +183,9 @@ def select_highlights(
                 end = start + hi
             if end - start < min(lo, total_duration):
                 end = min(total_duration, start + lo)
+            hooks = [str(h)[:80] for h in c.get("hooks", []) if str(h).strip()]
+            if not hooks and c.get("hook"):  # older single-hook responses
+                hooks = [str(c["hook"])[:80]]
             clips.append(
                 Highlight(
                     start=max(0.0, start),
@@ -174,7 +193,8 @@ def select_highlights(
                     title=str(c.get("title", "Clip"))[:120],
                     hashtags=[str(h).lstrip("#") for h in c.get("hashtags", [])],
                     reason=str(c.get("reason", "")),
-                    hook=str(c.get("hook", ""))[:80],
+                    hook=hooks[0] if hooks else "",
+                    hooks=hooks,
                 )
             )
         clips = [c for c in clips if c.duration >= min(lo, total_duration) * 0.5]

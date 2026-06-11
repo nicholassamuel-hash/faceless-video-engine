@@ -53,10 +53,28 @@ class Settings(BaseSettings):
     clip_max_seconds: int = Field(default=75, alias="FE_CLIP_MAX_SECONDS")
     clips_per_video: int = Field(default=1, alias="FE_CLIPS_PER_VIDEO")
     # "blur" = fit width + blurred fill (keeps whole frame, pro look);
-    # "fill" = center-crop to 9:16 (zooms in, loses sides).
-    clip_crop_mode: Literal["blur", "fill"] = Field(default="blur", alias="FE_CLIP_CROP_MODE")
+    # "fill" = center-crop to 9:16 (zooms in, loses sides);
+    # "smart" = like fill but centered on the detected speaker's face
+    #           (needs opencv-python; falls back to center when no face found).
+    clip_crop_mode: Literal["blur", "fill", "smart"] = Field(
+        default="blur", alias="FE_CLIP_CROP_MODE"
+    )
     # Auto-caption language to fetch from YouTube (e.g. "en", "id").
     clip_sub_lang: str = Field(default="en", alias="FE_CLIP_SUB_LANG")
+    # Candidate pool for virality ranking: ask the LLM for this many clip
+    # candidates, score them, keep the best clips_per_video. Set equal to
+    # clips_per_video to disable ranking.
+    clip_candidates: int = Field(default=4, alias="FE_CLIP_CANDIDATES")
+    # Hook A/B testing: render up to N variants of each selected clip, same cut
+    # with a different hook overlay (1 = off). Research: test 3 hook styles.
+    clip_hook_variants: int = Field(default=2, alias="FE_CLIP_HOOK_VARIANTS")
+
+    # --- Clipping campaigns (paid pay-per-view programs) --------------------
+    # Active campaign name (must exist in campaigns_file) — "" disables.
+    campaign: str = Field(default="", alias="FE_CAMPAIGN")
+    campaigns_file: Path = Field(
+        default=Path("./config/campaigns.json"), alias="FE_CAMPAIGNS_FILE"
+    )
 
     # --- LLM ---------------------------------------------------------------
     # provider: "openai" (OpenAI-compatible incl. OpenRouter/Groq/DeepSeek) or
@@ -96,6 +114,19 @@ class Settings(BaseSettings):
     jitter_max_minutes: float = Field(default=45, alias="FE_JITTER_MAX_MINUTES")
     tiktok_max_per_day: int = Field(default=3, alias="FE_TIKTOK_MAX_PER_DAY")
     youtube_max_per_day: int = Field(default=5, alias="FE_YOUTUBE_MAX_PER_DAY")
+    instagram_max_per_day: int = Field(default=3, alias="FE_INSTAGRAM_MAX_PER_DAY")
+
+    # --- Instagram Reels (Graph API; requires a Business/Creator account) ---
+    # The Graph API publishes Reels from a PUBLIC video URL, not a local file:
+    # host work/output behind a public base URL (e.g. a tunnel or bucket) and
+    # set FE_IG_VIDEO_BASE_URL; filenames are appended to it.
+    ig_access_token: str = Field(default="", alias="IG_ACCESS_TOKEN")
+    ig_user_id: str = Field(default="", alias="IG_USER_ID")
+    ig_video_base_url: str = Field(default="", alias="FE_IG_VIDEO_BASE_URL")
+
+    # --- Own-performance tracking -------------------------------------------
+    # Our TikTok handle for benchmark.own_stats (views -> earnings feedback loop).
+    own_tiktok_account: str = Field(default="", alias="FE_OWN_TIKTOK_ACCOUNT")
 
     # --- TikTok benchmark scraping (yt-dlp) --------------------------------
     # TikTok's account-listing is flaky in yt-dlp; using your logged-in session

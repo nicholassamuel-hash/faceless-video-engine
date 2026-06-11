@@ -147,3 +147,84 @@ def test_tiktok_engagement_and_normalize():
     stat = _to_stat("@acc", {"id": "1", "title": "hi", "view_count": 1000,
                              "like_count": 80, "comment_count": 15, "repost_count": 5})
     assert stat.engagement_rate == 0.1  # (80+15+5)/1000
+
+
+# --------------------------------------------------------------------------
+# campaign profiles
+# --------------------------------------------------------------------------
+def _campaign_settings(tmp_path: Path, name: str = "test-camp") -> Settings:
+    cfg = tmp_path / "campaigns.json"
+    cfg.write_text(json.dumps([{
+        "name": name, "cpm_idr": 7500, "min_views_payout": 1000,
+        "required_hashtags": ["BrandX", "fyp"], "mention": "@brandx",
+        "disclaimer": "Konten promosi berbayar.",
+        "ignored_extra_key": "ok",
+    }]), encoding="utf-8")
+    return Settings(FE_CAMPAIGNS_FILE=str(cfg), FE_CAMPAIGN=name)
+
+
+def test_campaign_apply_injects_metadata(tmp_path: Path):
+    from shared import campaigns as camp
+
+    profile = camp.get_active(_campaign_settings(tmp_path))
+    assert profile is not None
+    title, desc, tags = camp.apply(
+        profile, title="T", description="D", hashtags=["fyp", "crypto"]
+    )
+    assert tags[:2] == ["BrandX", "fyp"]      # required first
+    assert tags.count("fyp") == 1             # deduped (case-insensitive)
+    assert "crypto" in tags
+    assert "@brandx" in desc and "promosi" in desc
+
+
+def test_campaign_apply_noop_without_profile():
+    from shared import campaigns as camp
+
+    out = camp.apply(None, title="T", description="D", hashtags=["a"])
+    assert out == ("T", "D", ["a"])
+
+
+def test_campaign_missing_file_and_earnings(tmp_path: Path):
+    from shared import campaigns as camp
+
+    s = Settings(FE_CAMPAIGNS_FILE=str(tmp_path / "nope.json"), FE_CAMPAIGN="x")
+    assert camp.load_campaigns(s) == {}
+    assert camp.get_active(s) is None
+
+    profile = camp.get_active(_campaign_settings(tmp_path))
+    assert profile.estimate_idr(500) == 0          # below payout floor
+    assert profile.estimate_idr(10_000) == 75_000  # 10k views * Rp7500/1k
+
+
+# --------------------------------------------------------------------------
+# virality ranking + hook variants
+# --------------------------------------------------------------------------
+def test_rank_highlights_passthrough_without_llm():
+    from clipper.highlights import Highlight
+    from clipper.score import rank_highlights
+
+    hls = [Highlight(0, 30, "a"), Highlight(40, 70, "b")]
+    out = rank_highlights(hls, ["x", "y"], settings=Settings(LLM_API_KEY=""))
+    assert [h.title for h in out] == ["a", "b"]
+    assert all(h.score is None for h in out)
+
+
+def test_hook_variants_dedupe_and_floor():
+    from clipper.highlights import Highlight
+
+    hl = Highlight(0, 30, "t", hook="A", hooks=["A", "A", "B", "C"])
+    assert hl.hook_variants(3) == ["A", "B", "C"]
+    assert hl.hook_variants(1) == ["A"]
+    assert Highlight(0, 30, "t").hook_variants(3) == [""]  # no hooks -> one pass
+
+
+# --------------------------------------------------------------------------
+# smart crop chain
+# --------------------------------------------------------------------------
+def test_vertical_chain_smart_centers_on_face():
+    from clipper.crop import _vertical_chain
+
+    chain = _vertical_chain(1080, 1920, "smart", center_frac=0.25)
+    assert "0.2500*iw-ow/2" in chain and "max(0\\," in chain
+    # without a detected face, smart behaves like a plain center fill
+    assert _vertical_chain(1080, 1920, "smart", None) == _vertical_chain(1080, 1920, "fill")

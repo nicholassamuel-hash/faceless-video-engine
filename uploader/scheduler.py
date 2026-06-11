@@ -46,9 +46,11 @@ def _upload_one(
         return UploadResult.success
 
     # Enforce per-platform daily rate limit.
-    max_per_day = (
-        settings.tiktok_max_per_day if platform == Platform.tiktok else settings.youtube_max_per_day
-    )
+    max_per_day = {
+        Platform.tiktok: settings.tiktok_max_per_day,
+        Platform.youtube: settings.youtube_max_per_day,
+        Platform.instagram: settings.instagram_max_per_day,
+    }[platform]
     done_today = db.count_uploads_today(platform)
     if done_today >= max_per_day:
         log.info(
@@ -79,6 +81,15 @@ def _upload_one(
                 mode=settings.tiktok_mode, settings=settings,
             )
             mode = settings.tiktok_mode
+        elif platform == Platform.instagram:
+            from uploader.instagram import upload_to_instagram
+
+            outcome = upload_to_instagram(
+                entry["video_path"],
+                caption=f"{entry['title']}\n\n{entry['hashtags']}".strip(),
+                settings=settings,
+            )
+            mode = "reels"
         else:
             from uploader.youtube import upload_to_youtube
 

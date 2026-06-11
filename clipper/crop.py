@@ -14,9 +14,21 @@ from faceless_engine.tts import WordTiming
 log = logging.getLogger(__name__)
 
 
-def _vertical_chain(w: int, h: int, mode: str) -> str:
-    """Filter chain producing a WxH [base] label from input [0:v]."""
-    if mode == "fill":
+def _vertical_chain(w: int, h: int, mode: str, center_frac: float | None = None) -> str:
+    """Filter chain producing a WxH [base] label from input [0:v].
+
+    ``center_frac`` (0..1, smart mode) horizontally centers the crop window on
+    the detected speaker; the expression clamps it inside the frame.
+    """
+    if mode == "smart" and center_frac is not None:
+        cf = max(0.0, min(1.0, center_frac))
+        # x = clamp(cf*iw - ow/2, 0, iw-ow); commas escaped inside filter args.
+        x_expr = f"max(0\\,min(iw-ow\\,{cf:.4f}*iw-ow/2))"
+        return (
+            f"[0:v]scale={w}:{h}:force_original_aspect_ratio=increase,"
+            f"crop={w}:{h}:{x_expr}:(ih-oh)/2,setsar=1[base]"
+        )
+    if mode in ("fill", "smart"):  # smart without a face = plain center fill
         return (
             f"[0:v]scale={w}:{h}:force_original_aspect_ratio=increase,"
             f"crop={w}:{h},setsar=1[base]"
@@ -51,7 +63,12 @@ def make_clip(
     duration = max(1.0, end - start)
     mode = settings.clip_crop_mode
 
-    chain = _vertical_chain(w, h, mode)
+    center_frac = None
+    if mode == "smart":
+        from clipper.facetrack import face_center_fraction
+
+        center_frac = face_center_fraction(source_path, start, end)
+    chain = _vertical_chain(w, h, mode, center_frac)
 
     with tempfile.TemporaryDirectory(prefix="fe_clip_") as tmp:
         # Build the video filter graph, optionally appending the caption burn.

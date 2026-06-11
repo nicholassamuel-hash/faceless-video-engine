@@ -51,6 +51,7 @@ class QueueStatus(str, enum.Enum):
 class Platform(str, enum.Enum):
     tiktok = "tiktok"
     youtube = "youtube"
+    instagram = "instagram"
 
 
 class UploadResult(str, enum.Enum):
@@ -161,6 +162,28 @@ class TikTokStat(Base):
     engagement_rate: Mapped[float] = mapped_column(Float, default=0.0)
     posted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class OwnStat(Base):
+    """A snapshot of one of OUR posted videos' public metrics (performance loop).
+
+    Unlike TikTokStat (competitor benchmarking), these rows track our own
+    uploads so hook/format winners and campaign earnings can be computed.
+    """
+
+    __tablename__ = "own_stats"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    platform: Mapped[Platform] = mapped_column(SAEnum(Platform), index=True)
+    video_id: Mapped[str] = mapped_column(String(64), index=True)
+    title: Mapped[str] = mapped_column(Text, default="")
+    url: Mapped[str] = mapped_column(Text, default="")
+    views: Mapped[int] = mapped_column(Integer, default=0)
+    likes: Mapped[int] = mapped_column(Integer, default=0)
+    comments: Mapped[int] = mapped_column(Integer, default=0)
+    fetched_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
 
 
 class UploadLog(Base):
