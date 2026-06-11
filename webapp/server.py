@@ -232,6 +232,7 @@ def api_video(qid: int) -> FileResponse:
 @app.get("/api/doctor")
 def api_doctor() -> dict:
     from faceless_engine.ffmpeg_utils import FFmpegNotFoundError, find_ffmpeg
+    from shared import campaigns as camp_mod
 
     s = get_settings()
     try:
@@ -239,14 +240,31 @@ def api_doctor() -> dict:
         ff = True
     except FFmpegNotFoundError:
         ff = False
+    try:
+        import cv2  # noqa: F401
+        opencv = True
+    except ImportError:
+        opencv = False
     counts = {st.value: len(db.list_queue(status=st)) for st in QueueStatus}
+    campaign = camp_mod.get_active(s)
     return {
         "ffmpeg": ff,
+        "opencv": opencv,
         "llm": s.llm_base_url if s.llm_api_key else "template (no key)",
         "llm_model": s.llm_model if s.llm_api_key else "-",
+        "llm_configured": bool(s.llm_api_key),
         "image_provider": s.image_provider,
         "output_spec": f"{s.width}x{s.height}@{s.fps}",
         "tiktok_mode": s.tiktok_mode,
         "youtube_privacy": s.youtube_privacy,
+        "tiktok_token": bool(s.tiktok_access_token),
+        "youtube_secrets": Path(s.youtube_client_secrets).exists(),
+        "instagram": bool(s.ig_access_token and s.ig_user_id and s.ig_video_base_url),
+        "own_account": s.own_tiktok_account,
+        "campaign": campaign.name if campaign else "",
+        "campaign_cpm_idr": campaign.cpm_idr if campaign else 0,
+        "clip_candidates": s.clip_candidates,
+        "hook_variants": s.clip_hook_variants,
+        "crop_mode": s.clip_crop_mode,
         "queue_counts": counts,
     }
