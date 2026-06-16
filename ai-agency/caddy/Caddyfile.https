@@ -1,0 +1,35 @@
+# =============================================================
+#  Caddy — HTTPS mode (real Let's Encrypt certs)
+#  Used only when you launch with docker-compose.https.yml.
+#  Hostnames are injected from .env.
+# =============================================================
+
+{
+	email {$ACME_EMAIL}
+}
+
+# ---- Demo page + same-origin webhooks (the client-facing URL) ----
+{$DEMO_HOST} {
+	handle /webhook/* {
+		reverse_proxy n8n:5678
+	}
+	handle /webhook-test/* {
+		reverse_proxy n8n:5678
+	}
+	handle {
+		root * /srv/demo
+		encode gzip
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# ---- n8n editor ----
+{$N8N_HOST} {
+	reverse_proxy n8n:5678
+}
+
+# ---- Flowise ----
+{$FLOWISE_HOST} {
+	reverse_proxy flowise:3000
+}

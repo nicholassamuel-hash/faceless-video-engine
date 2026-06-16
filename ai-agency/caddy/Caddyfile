@@ -1,0 +1,40 @@
+# =============================================================
+#  Caddy router — IP-only / plain-HTTP mode
+#  Serves the demo page and proxies n8n webhooks (same-origin).
+# =============================================================
+
+{
+	# No domain yet -> don't try to fetch TLS certs.
+	auto_https off
+}
+
+:80 {
+	# --- Abandoned-cart webhooks -> n8n (no CORS, same origin) ---
+	handle /webhook/* {
+		reverse_proxy n8n:5678
+	}
+	handle /webhook-test/* {
+		reverse_proxy n8n:5678
+	}
+
+	# --- Everything else -> static demo page (Phase 3) ---
+	handle {
+		root * /srv/demo
+		encode gzip
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# =============================================================
+#  HTTPS UPGRADE (uncomment when you have a domain in .env)
+#  Then set N8N_PROTOCOL=https + WEBHOOK_URL=https://... in
+#  docker-compose.yml, and remove/replace the :80 block above.
+# =============================================================
+# {
+# 	email {$ACME_EMAIL}
+# }
+#
+# {$N8N_HOST} {
+# 	reverse_proxy n8n:5678
+# }
