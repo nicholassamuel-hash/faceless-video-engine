@@ -9,6 +9,9 @@ edge-tts>=6.1.10
 
 # Clipping (YouTube -> Shorts)
 yt-dlp>=2025.1.1
+# Smart speaker-centered crop (FE_CLIP_CROP_MODE=smart); optional — the
+# clipper falls back to a center crop when opencv is absent.
+opencv-python>=4.9
 
 # Networking / retries
 httpx>=0.27

@@ -1,0 +1,98 @@
+# =============================================================
+#  One-Man AI Agency — Core Stack  (IP-only / plain-HTTP mode)
+#  Services: Caddy (router) + n8n + Flowise
+#  All secrets/config come from .env (never hardcode here)
+#
+#  Public surface:
+#    http://YOUR_IP/            -> demo page (Phase 3)
+#    http://YOUR_IP/webhook/*   -> n8n webhooks (same-origin, no CORS)
+#    http://YOUR_IP:5678        -> n8n editor
+#    http://YOUR_IP:3000        -> Flowise
+#
+#  To upgrade to real HTTPS later, see the notes in .env.example
+#  and caddy/Caddyfile (the HTTPS block is included, commented out).
+# =============================================================
+
+services:
+  # ---- Router / reverse proxy ----
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"        # unused in HTTP mode; kept for the HTTPS upgrade
+      - "443:443/udp"
+    environment:
+      VPS_IP: ${VPS_IP}
+      N8N_HOST: ${N8N_HOST:-}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./demo:/srv/demo:ro          # static demo page (Phase 3)
+      - caddy_data:/data             # TLS certs (when HTTPS is enabled)
+      - caddy_config:/config
+    depends_on:
+      - n8n
+      - flowise
+
+  # ---- Automation backbone ----
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_HOST: ${VPS_IP}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_SECURE_COOKIE: "false"     # REQUIRED to log in over plain HTTP
+      NODE_ENV: production
+      WEBHOOK_URL: http://${VPS_IP}/         # webhooks resolve via Caddy (port 80)
+      N8N_EDITOR_BASE_URL: http://${VPS_IP}:5678/
+      GENERIC_TIMEZONE: ${TIMEZONE}
+      TZ: ${TIMEZONE}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_PROXY_HOPS: 1              # we sit behind exactly one proxy (Caddy)
+      N8N_RUNNERS_ENABLED: "true"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      # --- Phase 2: make these readable via {{ $env.* }} inside the workflow ---
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"   # allow $env in expressions/Code
+      NODE_FUNCTION_ALLOW_BUILTIN: "fs"        # let the Log node append to a CSV
+      LLM_API_BASE: ${LLM_API_BASE}
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_MODEL: ${LLM_MODEL}
+      LLM_APP_URL: ${LLM_APP_URL:-http://localhost}
+      LLM_APP_NAME: ${LLM_APP_NAME:-Cart Recovery Bot}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Your Store}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  # ---- AI agent / flow builder ----
+  flowise:
+    image: flowiseai/flowise:latest
+    container_name: flowise
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      FLOWISE_USERNAME: ${FLOWISE_USERNAME}
+      FLOWISE_PASSWORD: ${FLOWISE_PASSWORD}
+      DATABASE_PATH: /root/.flowise
+      APIKEY_PATH: /root/.flowise
+      SECRETKEY_PATH: /root/.flowise
+      LOG_PATH: /root/.flowise/logs
+    volumes:
+      - flowise_data:/root/.flowise
+
+volumes:
+  n8n_data:
+  flowise_data:
+  caddy_data:
+  caddy_config:

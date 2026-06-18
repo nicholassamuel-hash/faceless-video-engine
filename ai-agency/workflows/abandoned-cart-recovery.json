@@ -1,0 +1,396 @@
+{
+  "name": "Abandoned Cart Recovery (Demo)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "wh1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        320
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "abandoned-cart",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "abandoned-cart-demo"
+    },
+    {
+      "id": "prep",
+      "name": "Prepare Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        320
+      ],
+      "parameters": {
+        "jsCode": "// Normalize the incoming Shopify-style \"checkout abandoned\" payload\nconst input = $input.first().json;\nconst b = input.body || input;          // n8n puts the JSON body under .body\n\nconst items = Array.isArray(b.cart_items) ? b.cart_items : [];\n\n// plain-text list for the LLM prompt\nconst items_text = items\n  .map(i => `- ${i.name || i.title || 'Item'}: ${i.price ?? ''}`)\n  .join('\\n');\n\n// HTML rows for the email template (2 columns: name | price)\nconst items_html = items\n  .map(i => `<tr><td style=\"padding:8px 0;border-bottom:1px solid #eee;color:#333;font-size:14px;\">${i.name || i.title || 'Item'}</td><td style=\"padding:8px 0;border-bottom:1px solid #eee;color:#333;font-size:14px;text-align:right;white-space:nowrap;\">${i.price ?? ''}</td></tr>`)\n  .join('');\n\n// demo override: pass \"delay_minutes\" in the payload to fire sooner. Defaults to 60 (= 1 hour).\nconst delay_minutes = Number(b.delay_minutes) > 0 ? Number(b.delay_minutes) : 60;\n\nconst customer_name = b.customer_name || 'there';\n\nconst llm_messages = [\n  { role: 'system', content: 'You write short, warm, non-pushy abandoned-cart recovery email body copy for an online store. Output ONLY 2-3 short paragraphs of body text (90-130 words). No subject line, no greeting like Hi or Hello, no sign-off or signature, no markdown, no fake discounts. Gently remind them their items are saved and invite them to finish checking out.' },\n  { role: 'user', content: `Customer first name: ${customer_name}\\nCart total: ${b.cart_total ?? ''}\\nItems:\\n${items_text || '- (no items provided)'}\\n\\nWrite the recovery email body.` }\n];\n\nreturn [{ json: {\n  customer_name,\n  customer_email: b.customer_email || '',\n  customer_phone: b.customer_phone || '',\n  cart_total: b.cart_total ?? '',\n  checkout_url: b.checkout_url || '#',\n  items_text,\n  items_html,\n  delay_minutes,\n  llm_messages\n} }];"
+      }
+    },
+    {
+      "id": "resp",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        320
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"scheduled\", \"message\": \"Recovery email scheduled for \" + $json.customer_name + \" in \" + $json.delay_minutes + \" minute(s)\" } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wait",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        320
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $json.delay_minutes }}",
+        "unit": "minutes"
+      },
+      "webhookId": "wait-cart-demo"
+    },
+    {
+      "id": "llm",
+      "name": "Generate Email Copy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1140,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.LLM_API_BASE }}/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LLM_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "HTTP-Referer",
+              "value": "={{ $env.LLM_APP_URL }}"
+            },
+            {
+              "name": "X-Title",
+              "value": "={{ $env.LLM_APP_NAME }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": $env.LLM_MODEL, \"messages\": $json.llm_messages, \"temperature\": 0.7, \"max_tokens\": 400 } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "build",
+      "name": "Build Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        220
+      ],
+      "parameters": {
+        "jsCode": "// Combine the LLM-written copy with a clean, image-free HTML template\nconst data = $('Prepare Data').item.json;\n\nlet copy;\ntry {\n  copy = $json.choices[0].message.content.trim();\n} catch (e) {\n  copy = `We noticed you left a few things in your cart, and we saved them for you. Whenever you are ready, you can pick up right where you left off. If you have any questions about your order, just reply to this email and we will be glad to help.`;\n}\n\nconst copy_html = copy\n  .split(/\\n\\s*\\n/)\n  .map(p => `<p style=\"margin:0 0 16px;line-height:1.6;color:#333;font-size:15px;\">${p.replace(/\\n/g, '<br>')}</p>`)\n  .join('');\n\nconst name = data.customer_name || 'there';\nconst subject = `${name}, you left something in your cart`;\n\nconst html = `<!DOCTYPE html>\n<html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>\n<body style=\"margin:0;padding:0;background:#f4f4f7;font-family:Arial,Helvetica,sans-serif;\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#f4f4f7;padding:24px 0;\"><tr><td align=\"center\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:520px;background:#ffffff;border-radius:12px;border:1px solid #ececf1;\">\n<tr><td style=\"padding:28px 32px 8px;\"><h1 style=\"margin:0;font-size:20px;color:#111;\">Hi ${name}, your cart misses you</h1></td></tr>\n<tr><td style=\"padding:8px 32px 0;\">${copy_html}</td></tr>\n<tr><td style=\"padding:8px 32px 0;\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">\n<tr><td colspan=\"2\" style=\"padding-top:12px;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.5px;\">Your cart</td></tr>\n${data.items_html}\n<tr><td style=\"padding:12px 0 0;font-weight:bold;color:#111;font-size:15px;\">Total</td><td style=\"padding:12px 0 0;font-weight:bold;color:#111;font-size:15px;text-align:right;\">${data.cart_total}</td></tr>\n</table></td></tr>\n<tr><td align=\"center\" style=\"padding:28px 32px;\"><a href=\"${data.checkout_url}\" style=\"background:#111;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:bold;display:inline-block;\">Complete your order</a></td></tr>\n<tr><td style=\"padding:0 32px 28px;\"><p style=\"margin:0;font-size:12px;color:#aaaaaa;line-height:1.5;\">You are receiving this because you started a checkout with us. If this was not you, please ignore this email.</p></td></tr>\n</table></td></tr></table></body></html>`;\n\nreturn [{ json: {\n  email_subject: subject,\n  email_html: html,\n  customer_email: data.customer_email,\n  customer_name: name,\n  cart_total: data.cart_total\n} }];"
+      }
+    },
+    {
+      "id": "send",
+      "name": "Send Recovery Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1580,
+        220
+      ],
+      "parameters": {
+        "fromEmail": "={{ $env.SMTP_FROM_EMAIL }}",
+        "toEmail": "={{ $('Prepare Data').item.json.customer_email }}",
+        "subject": "={{ $json.email_subject }}",
+        "emailFormat": "html",
+        "html": "={{ $json.email_html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE_SMTP",
+          "name": "Gmail SMTP"
+        }
+      }
+    },
+    {
+      "id": "logok",
+      "name": "Log: Sent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        140
+      ],
+      "parameters": {
+        "jsCode": "// Append a row to a local CSV log (no OAuth needed). status = sent\nconst fs = require('fs');\nconst path = '/home/node/.n8n/cart_recovery_log.csv';\nconst data = $('Prepare Data').item.json;\nconst esc = v => '\"' + String(v ?? '').replace(/\"/g, '\"\"') + '\"';\nif (!fs.existsSync(path)) {\n  fs.writeFileSync(path, 'timestamp,customer_name,customer_email,cart_total,status\\n');\n}\nconst row = [new Date().toISOString(), data.customer_name, data.customer_email, data.cart_total, 'sent'].map(esc).join(',') + '\\n';\nfs.appendFileSync(path, row);\nreturn [{ json: { logged: true, status: 'sent', file: path } }];"
+      }
+    },
+    {
+      "id": "logbad",
+      "name": "Log: Failed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        320
+      ],
+      "parameters": {
+        "jsCode": "// Append a row to a local CSV log (no OAuth needed). status = sent\nconst fs = require('fs');\nconst path = '/home/node/.n8n/cart_recovery_log.csv';\nconst data = $('Prepare Data').item.json;\nconst esc = v => '\"' + String(v ?? '').replace(/\"/g, '\"\"') + '\"';\nif (!fs.existsSync(path)) {\n  fs.writeFileSync(path, 'timestamp,customer_name,customer_email,cart_total,status\\n');\n}\nconst row = [new Date().toISOString(), data.customer_name, data.customer_email, data.cart_total, 'failed'].map(esc).join(',') + '\\n';\nfs.appendFileSync(path, row);\nreturn [{ json: { logged: true, status: 'failed', file: path } }];"
+      }
+    },
+    {
+      "id": "ifphone",
+      "name": "Has Phone?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1140,
+        480
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Prepare Data').item.json.customer_phone }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wa",
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        480
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WHATSAPP_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"messaging_product\": \"whatsapp\", \"to\": $('Prepare Data').item.json.customer_phone, \"type\": \"text\", \"text\": { \"body\": \"Hi \" + $('Prepare Data').item.json.customer_name + \", your cart is still waiting for you. Finish here: \" + $('Prepare Data').item.json.checkout_url } } }}",
+        "options": {}
+      },
+      "disabled": true
+    },
+    {
+      "id": "note1",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        200,
+        120
+      ],
+      "parameters": {
+        "content": "## 1. Trigger & schedule\nWebhook receives the abandoned checkout, replies instantly, then **Wait** holds for 60 min.\n\n**Demo tip:** send `\"delay_minutes\": 1` in the payload to fire in 1 minute.",
+        "height": 160,
+        "width": 620,
+        "color": 4
+      }
+    },
+    {
+      "id": "note2",
+      "name": "Note 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        40
+      ],
+      "parameters": {
+        "content": "## 2. Generate, send & log\nLLM (Groq/OpenRouter) writes friendly copy \u2192 clean HTML email via Gmail SMTP \u2192 result logged (sent/failed) to `~/.n8n/cart_recovery_log.csv`.",
+        "height": 150,
+        "width": 660,
+        "color": 5
+      }
+    },
+    {
+      "id": "note3",
+      "name": "Note 3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        600
+      ],
+      "parameters": {
+        "content": "## Optional: WhatsApp\nFires only if `customer_phone` is present. **Disabled by default** \u2014 needs a Meta token + approved template to go live.",
+        "height": 150,
+        "width": 460,
+        "color": 6
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Data": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Generate Email Copy",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Has Phone?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Email Copy": {
+      "main": [
+        [
+          {
+            "node": "Build Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Email": {
+      "main": [
+        [
+          {
+            "node": "Send Recovery Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Recovery Email": {
+      "main": [
+        [
+          {
+            "node": "Log: Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log: Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Phone?": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

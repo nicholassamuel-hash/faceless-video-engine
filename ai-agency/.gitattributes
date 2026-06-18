@@ -1,0 +1,8 @@
+# Keep LF line endings so scripts/configs work on the Linux VPS,
+# even when the repo is edited or copied from Windows.
+* text=auto eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+Caddyfile text eol=lf
+Caddyfile.https text eol=lf

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cart Recovery — Live Demo</title>
+<style>
+  :root{
+    --bg1:#eef1f7; --bg2:#e3e8f2;
+    --card:#ffffff; --ink:#0f1222; --muted:#6b7185;
+    --line:#e7e9f0; --accent:#5b5bd6; --accent-ink:#ffffff;
+    --ok:#16a34a; --okbg:#ecfdf3; --err:#dc2626; --errbg:#fef2f2;
+    --field:#f7f8fb;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background:radial-gradient(1200px 600px at 50% -10%,#ffffff, transparent),
+               linear-gradient(160deg,var(--bg1),var(--bg2));
+    display:flex; align-items:center; justify-content:center; padding:32px 16px;
+  }
+  .card{
+    width:100%; max-width:560px; background:var(--card);
+    border:1px solid var(--line); border-radius:18px;
+    box-shadow:0 20px 50px -20px rgba(20,24,60,.25), 0 2px 6px rgba(20,24,60,.04);
+    overflow:hidden;
+  }
+  .head{padding:26px 30px 18px; border-bottom:1px solid var(--line);}
+  .badge{
+    display:inline-flex; align-items:center; gap:7px; font-size:11px; font-weight:700;
+    letter-spacing:.6px; text-transform:uppercase; color:var(--accent);
+    background:#eef0fb; border:1px solid #e0e3f7; padding:5px 10px; border-radius:999px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px #e0e3f7}
+  h1{margin:14px 0 4px; font-size:22px; letter-spacing:-.4px;}
+  .sub{margin:0; color:var(--muted); font-size:14px;}
+  form{padding:22px 30px 8px;}
+  .row{display:flex; gap:12px;}
+  .row > *{flex:1}
+  label{display:block; font-size:12.5px; font-weight:600; color:#3a3f55; margin:0 0 6px;}
+  .field, input, select{
+    width:100%; font-size:14.5px; color:var(--ink); background:var(--field);
+    border:1px solid var(--line); border-radius:11px; padding:11px 12px; outline:none;
+    transition:border-color .15s, box-shadow .15s, background .15s; font-family:inherit;
+  }
+  input::placeholder{color:#aab0c0}
+  input:focus, select:focus{border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px #e7e8fb;}
+  .group{margin-bottom:16px;}
+  .hint{font-size:12px; color:var(--muted); margin:6px 2px 0;}
+  .items{display:flex; flex-direction:column; gap:9px;}
+  .item{display:flex; gap:9px; align-items:center;}
+  .item .name{flex:3}
+  .item .price{flex:1; min-width:96px}
+  .icon-btn{
+    flex:0 0 auto; width:38px; height:42px; border:1px solid var(--line); background:#fff;
+    border-radius:11px; color:#9aa0b2; font-size:18px; cursor:pointer; line-height:1;
+    transition:.15s;
+  }
+  .icon-btn:hover{color:var(--err); border-color:#f3c8c8; background:#fff6f6;}
+  .additem{
+    margin-top:10px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+    color:var(--accent); font-weight:600; font-size:13.5px; user-select:none; background:none; border:0; padding:4px;
+  }
+  .additem:hover{text-decoration:underline}
+  .totalbar{
+    display:flex; justify-content:space-between; align-items:center; margin-top:16px;
+    padding:13px 14px; background:#0f1222; color:#fff; border-radius:12px;
+  }
+  .totalbar .lbl{font-size:12px; letter-spacing:.5px; text-transform:uppercase; color:#aab2d6}
+  .totalbar .val{font-size:20px; font-weight:700;}
+  .seg{display:flex; background:var(--field); border:1px solid var(--line); border-radius:11px; padding:4px; gap:4px;}
+  .seg button{
+    flex:1; border:0; background:transparent; padding:9px 8px; border-radius:8px; cursor:pointer;
+    font-size:13px; font-weight:600; color:var(--muted); font-family:inherit; transition:.15s;
+  }
+  .seg button.on{background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .submit{
+    width:100%; margin:18px 0 6px; padding:15px; border:0; border-radius:12px; cursor:pointer;
+    background:var(--ink); color:#fff; font-size:15.5px; font-weight:700; letter-spacing:.2px;
+    display:flex; align-items:center; justify-content:center; gap:9px; transition:.18s; font-family:inherit;
+  }
+  .submit:hover{transform:translateY(-1px); box-shadow:0 10px 24px -10px rgba(15,18,34,.6);}
+  .submit:disabled{opacity:.65; cursor:default; transform:none; box-shadow:none;}
+  .spin{width:17px;height:17px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;display:none}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .foot{padding:14px 30px 22px; color:#9aa0b2; font-size:12px; text-align:center; border-top:1px solid var(--line);}
+  details{margin:4px 0 10px;}
+  summary{font-size:12.5px; color:var(--muted); cursor:pointer; user-select:none;}
+  summary:hover{color:var(--ink)}
+  details .group{margin-top:12px}
+  /* success / error */
+  .result{padding:40px 30px; text-align:center; display:none;}
+  .check{width:62px;height:62px;border-radius:50%;background:var(--okbg);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;}
+  .check svg{width:30px;height:30px;stroke:var(--ok)}
+  .result h2{margin:0 0 8px; font-size:20px;}
+  .result p{margin:0 auto; color:var(--muted); font-size:14.5px; max-width:380px; line-height:1.55;}
+  .again{margin-top:22px; background:#fff; color:var(--ink); border:1px solid var(--line); padding:11px 18px; border-radius:11px; font-weight:600; cursor:pointer; font-family:inherit; font-size:14px;}
+  .again:hover{background:var(--field)}
+  .errbox{display:none; margin:0 0 14px; padding:11px 13px; background:var(--errbg); border:1px solid #f6d5d5; color:var(--err); border-radius:11px; font-size:13px;}
+</style>
+</head>
+<body>
+  <main class="card">
+    <!-- ===== Form view ===== -->
+    <div id="formView">
+      <div class="head">
+        <span class="badge"><span class="dot"></span> Live Demo</span>
+        <h1>Abandoned Cart Recovery</h1>
+        <p class="sub">Simulate a “checkout abandoned” event and watch the AI recovery email fire.</p>
+      </div>
+
+      <form id="form" autocomplete="off">
+        <div id="errbox" class="errbox"></div>
+
+        <div class="row group">
+          <div>
+            <label for="name">Customer name</label>
+            <input id="name" name="name" placeholder="Sarah Chen" value="Sarah Chen" required>
+          </div>
+          <div>
+            <label for="email">Customer email</label>
+            <input id="email" name="email" type="email" placeholder="you@example.com" required>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:-8px;margin-bottom:14px;">↑ Use an inbox you can open on camera — the recovery email lands here.</p>
+
+        <div class="row group">
+          <div>
+            <label for="phone">Phone <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+            <input id="phone" name="phone" placeholder="+44…">
+          </div>
+          <div>
+            <label for="currency">Currency</label>
+            <select id="currency"><option>$</option><option>£</option><option>€</option></select>
+          </div>
+        </div>
+
+        <div class="group">
+          <label>Cart items</label>
+          <div class="items" id="items"></div>
+          <button type="button" class="additem" id="addItem">＋ Add item</button>
+
+          <div class="totalbar">
+            <span class="lbl">Cart total</span>
+            <span class="val" id="total">$0.00</span>
+          </div>
+        </div>
+
+        <div class="group">
+          <label>Send recovery email after</label>
+          <div class="seg" id="delaySeg">
+            <button type="button" data-min="1" class="on">1 min · demo</button>
+            <button type="button" data-min="60">60 min · real</button>
+          </div>
+        </div>
+
+        <details>
+          <summary>Advanced</summary>
+          <div class="group">
+            <label for="checkout">Checkout URL</label>
+            <input id="checkout" value="https://demo-store.example/checkout/abc123">
+          </div>
+          <div class="group">
+            <label for="endpoint">Webhook endpoint</label>
+            <input id="endpoint" value="/webhook/abandoned-cart">
+            <p class="hint">Same-origin via Caddy. For n8n test mode use <code>/webhook-test/abandoned-cart</code>.</p>
+          </div>
+        </details>
+
+        <button class="submit" id="submit" type="submit">
+          <span class="spin" id="spin"></span>
+          <span id="submitLabel">Trigger recovery sequence</span>
+        </button>
+      </form>
+      <div class="foot">Powered by n8n · Groq / OpenRouter · Gmail SMTP</div>
+    </div>
+
+    <!-- ===== Success view ===== -->
+    <div class="result" id="successView">
+      <div class="check">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <h2>Recovery sequence scheduled ✅</h2>
+      <p id="successMsg">The customer will receive a personalised email shortly.</p>
+      <button class="again" id="again">Send another</button>
+      <div class="foot" style="margin-top:26px;border:0;">This is a demo trigger — in production this fires automatically from your store.</div>
+    </div>
+  </main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const itemsEl = $('items');
+  const sample = [
+    { name: 'Aurora Linen Shirt', price: '49.00' },
+    { name: 'Canvas Weekender Bag', price: '89.00' },
+  ];
+
+  function currency(){ return $('currency').value; }
+
+  function itemRow(name='', price=''){
+    const row = document.createElement('div');
+    row.className = 'item';
+    row.innerHTML =
+      `<input class="name" placeholder="Product name" value="${name}">
+       <input class="price" inputmode="decimal" placeholder="0.00" value="${price}">
+       <button type="button" class="icon-btn" title="Remove">×</button>`;
+    row.querySelector('.icon-btn').onclick = () => { row.remove(); recalc(); };
+    row.querySelectorAll('input').forEach(i => i.addEventListener('input', recalc));
+    return row;
+  }
+
+  function recalc(){
+    let sum = 0;
+    itemsEl.querySelectorAll('.item').forEach(r => {
+      const p = parseFloat(r.querySelector('.price').value);
+      if (!isNaN(p)) sum += p;
+    });
+    $('total').textContent = currency() + sum.toFixed(2);
+  }
+
+  function readItems(){
+    return [...itemsEl.querySelectorAll('.item')].map(r => ({
+      name: r.querySelector('.name').value.trim(),
+      price: currency() + (parseFloat(r.querySelector('.price').value) || 0).toFixed(2),
+    })).filter(i => i.name);
+  }
+
+  // init sample items
+  sample.forEach(s => itemsEl.appendChild(itemRow(s.name, s.price)));
+  recalc();
+
+  $('addItem').onclick = () => { itemsEl.appendChild(itemRow()); };
+  $('currency').onchange = recalc;
+
+  // delay segmented control
+  let delayMin = 1;
+  $('delaySeg').querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      $('delaySeg').querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      delayMin = parseInt(b.dataset.min, 10);
+    };
+  });
+
+  function showError(msg){
+    const e = $('errbox'); e.textContent = msg; e.style.display = 'block';
+  }
+
+  $('form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    $('errbox').style.display = 'none';
+
+    const items = readItems();
+    if (!items.length){ showError('Add at least one cart item.'); return; }
+
+    const payload = {
+      customer_name: $('name').value.trim(),
+      customer_email: $('email').value.trim(),
+      customer_phone: $('phone').value.trim(),
+      cart_items: items,
+      cart_total: $('total').textContent,
+      checkout_url: $('checkout').value.trim(),
+      delay_minutes: delayMin,
+    };
+
+    const submit = $('submit'), spin = $('spin'), label = $('submitLabel');
+    submit.disabled = true; spin.style.display = 'inline-block'; label.textContent = 'Sending…';
+
+    try {
+      const res = await fetch($('endpoint').value.trim(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('Webhook returned ' + res.status + (res.status===404 ? ' — is the workflow active?' : ''));
+
+      let msg = `A personalised recovery email for ${payload.customer_name} will be sent to ${payload.customer_email} in ${delayMin} minute${delayMin>1?'s':''}.`;
+      try { const j = await res.json(); if (j && j.message) msg = j.message; } catch(_){}
+
+      $('successMsg').textContent = msg;
+      $('formView').style.display = 'none';
+      $('successView').style.display = 'block';
+    } catch (err) {
+      showError(err.message || 'Could not reach the webhook.');
+    } finally {
+      submit.disabled = false; spin.style.display = 'none'; label.textContent = 'Trigger recovery sequence';
+    }
+  });
+
+  $('again').onclick = () => {
+    $('successView').style.display = 'none';
+    $('formView').style.display = 'block';
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# =============================================================
+#  HTTPS overlay — apply ON TOP OF docker-compose.yml.
+#  Gives real Let's Encrypt certificates via Caddy (green lock),
+#  perfect for recording a polished client demo.
+#
+#  1. In .env, set DEMO_HOST / N8N_HOST / FLOWISE_HOST / ACME_EMAIL.
+#     Free + no signup: use nip.io, e.g. app.<your-ip>.nip.io
+#  2. Open ports 80 AND 443 on the VPS firewall.
+#  3. Launch with BOTH compose files:
+#       docker compose -f docker-compose.yml -f docker-compose.https.yml up -d
+#
+#  Resulting public surface:
+#     https://DEMO_HOST/      -> demo page + webhooks (same origin)
+#     https://N8N_HOST/       -> n8n editor
+#     https://FLOWISE_HOST/   -> Flowise
+#
+#  These override the matching keys in the base file; everything
+#  else (encryption key, LLM_*, SMTP_*, volumes) is inherited.
+# =============================================================
+
+services:
+  caddy:
+    volumes:
+      # Replaces the plain-HTTP Caddyfile with the HTTPS one
+      - ./caddy/Caddyfile.https:/etc/caddy/Caddyfile:ro
+    environment:
+      DEMO_HOST: ${DEMO_HOST}
+      N8N_HOST: ${N8N_HOST}
+      FLOWISE_HOST: ${FLOWISE_HOST}
+      ACME_EMAIL: ${ACME_EMAIL}
+
+  n8n:
+    environment:
+      N8N_HOST: ${N8N_HOST}
+      N8N_PROTOCOL: https
+      N8N_SECURE_COOKIE: "true"               # fine now that we're on HTTPS
+      WEBHOOK_URL: https://${DEMO_HOST}/        # webhooks live on the demo host
+      N8N_EDITOR_BASE_URL: https://${N8N_HOST}/ # editor on its own subdomain

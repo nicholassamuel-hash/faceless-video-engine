@@ -1,0 +1,6 @@
+# Never commit real secrets
+.env
+
+# Logs / local junk
+*.log
+.DS_Store

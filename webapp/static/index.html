@@ -21,11 +21,12 @@
   .logo .dot{width:30px;height:30px;border-radius:9px;background:var(--grad);box-shadow:0 6px 18px rgba(124,92,255,.45)}
   .logo b{font-size:17px;letter-spacing:.3px}
   .logo span{display:block;font-size:11px;color:var(--mut);font-weight:400}
-  .nav{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;color:var(--mut);cursor:pointer;font-weight:600;font-size:14px;transition:.15s}
+  .nav{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;color:var(--mut);cursor:pointer;font-weight:600;font-size:14px;transition:.15s;position:relative}
   .nav:hover{background:var(--card);color:var(--txt)}
   .nav.active{background:var(--card2);color:#fff;box-shadow:inset 0 0 0 1px var(--line)}
-  .nav.active::before{content:"";position:absolute;margin-left:-13px;width:3px;height:20px;border-radius:3px;background:var(--grad)}
+  .nav.active::before{content:"";position:absolute;left:0;width:3px;height:20px;border-radius:3px;background:var(--grad)}
   .nav .ic{font-size:17px;width:20px;text-align:center}
+  .nav .bdg{margin-left:auto;font-size:10.5px;background:var(--accent);color:#fff;border-radius:10px;padding:2px 7px;font-weight:700}
   .side .foot{margin-top:auto;font-size:11px;color:var(--mut);padding:8px 6px;line-height:1.6}
   /* main */
   .main{grid-row:1/2;overflow-y:auto;padding:26px 32px}
@@ -54,6 +55,39 @@
   .btn.sm{padding:8px 14px;font-size:13px;margin:0}
   .btn.ok{background:linear-gradient(135deg,#3ddc97,#23c4a8)}
   .btn.dgr{background:linear-gradient(135deg,#ff5c7a,#ff8a5c)}
+  /* HOME */
+  .hero{background:linear-gradient(135deg,rgba(124,92,255,.16),rgba(35,196,168,.10)),var(--card);
+    border:1px solid var(--line);border-radius:18px;padding:28px;margin-bottom:18px;
+    display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+  .hero h2{margin:0 0 6px;font-size:24px}
+  .hero p{margin:0;color:var(--mut);font-size:13.5px;max-width:520px;line-height:1.6}
+  .hero .cta{display:flex;gap:10px;flex-wrap:wrap}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;cursor:pointer;transition:.15s}
+  .stat:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .stat .n{font-size:26px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .l{font-size:12px;color:var(--mut);font-weight:600;margin-top:2px}
+  .quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:18px}
+  .qa{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;transition:.15s}
+  .qa:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+  .qa .ic{font-size:24px}
+  .qa b{display:block;margin:8px 0 4px;font-size:14.5px}
+  .qa span{font-size:12px;color:var(--mut);line-height:1.5;display:block}
+  .check{display:flex;align-items:flex-start;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
+  .check:last-child{border-bottom:0}
+  .check .st{width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:800;margin-top:1px}
+  .check .st.ok{background:rgba(61,220,151,.15);color:var(--ok)}
+  .check .st.bad{background:rgba(255,92,122,.15);color:var(--danger)}
+  .check .st.opt{background:rgba(139,147,167,.15);color:var(--mut)}
+  .check b{font-size:13.5px}
+  .check small{display:block;color:var(--mut);font-size:12px;margin-top:2px;line-height:1.55}
+  .check code{background:var(--bg);border:1px solid var(--line);padding:1px 6px;border-radius:6px;font-size:11px;color:var(--accent2)}
+  .recent{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .rc{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card2);cursor:pointer;transition:.15s}
+  .rc:hover{border-color:var(--accent)}
+  .rc video{width:100%;aspect-ratio:9/16;object-fit:cover;background:#000;max-height:200px;pointer-events:none}
+  .rc .t{font-size:11.5px;padding:8px 10px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* review grid */
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
   .vcard{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
@@ -94,9 +128,10 @@
   <!-- SIDEBAR -->
   <aside class="side">
     <div class="logo"><div class="dot"></div><div><b>Faceless Studio</b><span>local content engine</span></div></div>
-    <div class="nav active" data-p="generate"><span class="ic">✨</span> Generate</div>
+    <div class="nav active" data-p="home"><span class="ic">🏠</span> Home</div>
+    <div class="nav" data-p="generate"><span class="ic">✨</span> Generate</div>
     <div class="nav" data-p="clip"><span class="ic">✂️</span> Clip YouTube</div>
-    <div class="nav" data-p="review"><span class="ic">🎬</span> Review</div>
+    <div class="nav" data-p="review"><span class="ic">🎬</span> Review <span class="bdg" id="n-rev" style="display:none">0</span></div>
     <div class="nav" data-p="tiktok"><span class="ic">📊</span> TikTok Stats</div>
     <div class="nav" data-p="status"><span class="ic">⚙️</span> Status</div>
     <div class="foot">SAFE mode • local only<br/>nothing uploads automatically</div>
@@ -105,12 +140,53 @@
   <!-- MAIN -->
   <main class="main">
     <div class="topbar">
-      <h1 id="ttl">Generate a video</h1>
+      <h1 id="ttl">Home</h1>
       <div class="pills" id="pills"></div>
     </div>
 
+    <!-- HOME -->
+    <section class="panel show" id="p-home">
+      <div class="hero">
+        <div>
+          <h2>Selamat datang 👋</h2>
+          <p>Satu tempat untuk bikin video faceless, ngeklip YouTube jadi Shorts, review hasilnya,
+             lalu upload dengan aman. Semua jalan <b>100% lokal</b> di laptop ini — tanpa subscription.</p>
+        </div>
+        <div class="cta">
+          <button class="btn" onclick="go('generate')">✨ Buat video</button>
+          <button class="btn ghost" onclick="go('clip')">✂️ Klip YouTube</button>
+        </div>
+      </div>
+
+      <div class="stats" id="h-stats"></div>
+
+      <div class="quick">
+        <div class="qa" onclick="go('generate')"><div class="ic">✨</div><b>Generate faceless video</b>
+          <span>Topik → naskah AI → narasi → visual → caption. ±2 menit per video.</span></div>
+        <div class="qa" onclick="go('clip')"><div class="ic">✂️</div><b>Clip dari YouTube</b>
+          <span>LLM pilih momen terbaik, skor virality, hook A/B, crop 9:16 otomatis.</span></div>
+        <div class="qa" onclick="go('review')"><div class="ic">🎬</div><b>Review &amp; approve</b>
+          <span>Tonton dulu sebelum publish — tidak ada yang naik tanpa persetujuanmu.</span></div>
+        <div class="qa" onclick="go('tiktok')"><div class="ic">📊</div><b>Riset kompetitor</b>
+          <span>Tarik statistik akun TikTok mana pun: views, engagement, durasi viral.</span></div>
+      </div>
+
+      <div class="row" style="align-items:flex-start">
+        <div class="card" style="flex:1.2">
+          <h2>🚀 Setup checklist</h2>
+          <div class="sub">Hijau = siap. Klik item merah untuk lihat cara mengaktifkannya (edit file <code>.env</code> lalu restart).</div>
+          <div id="h-setup"><span class="spin"></span>checking…</div>
+        </div>
+        <div class="card" style="flex:1">
+          <h2>🕑 Terbaru di queue</h2>
+          <div class="sub">Hasil terakhir yang menunggu review.</div>
+          <div class="recent" id="h-recent"><div class="empty">belum ada</div></div>
+        </div>
+      </div>
+    </section>
+
     <!-- GENERATE -->
-    <section class="panel show" id="p-generate">
+    <section class="panel" id="p-generate">
       <div class="card">
         <h2>AI faceless video</h2>
         <div class="sub">Script → narration → imagery + Ken Burns → captions → 9:16 MP4.</div>
@@ -143,7 +219,7 @@
     <section class="panel" id="p-clip">
       <div class="card">
         <h2>Clip a YouTube video</h2>
-        <div class="sub">Download → pick best moments (LLM) → crop 9:16 + burn captions. Authentic footage.</div>
+        <div class="sub">Download → LLM pilih &amp; skor momen terbaik → hook A/B variants → crop 9:16 + captions.</div>
         <label>YouTube URL</label>
         <input id="c-url" placeholder="https://youtu.be/..." />
         <div class="row">
@@ -152,14 +228,20 @@
           <div><label>Clips</label><input id="c-clips" type="number" value="1" min="1" max="6" /></div>
           <div><label>Target seconds</label><input id="c-target" type="number" value="58" min="15" max="180" /></div>
           <div><label>Framing</label>
-            <select id="c-crop"><option value="blur">Blur fill</option><option value="fill">Center crop</option></select></div>
+            <select id="c-crop">
+              <option value="blur">Blur fill</option>
+              <option value="fill">Center crop</option>
+              <option value="smart">Smart (follow speaker)</option>
+            </select></div>
           <div><label>Captions</label>
             <select id="c-cap"><option value="pop">Pop (TikTok)</option><option value="highlight">Highlight</option></select></div>
           <div><label>Hook</label>
             <select id="c-hook"><option value="1">On</option><option value="0">Off</option></select></div>
         </div>
         <button class="btn" id="c-btn" onclick="doClip()">✂️ Make clips</button>
-        <div class="hint">Use sources you're allowed to repurpose. Clips land in <b>Review</b>.</div>
+        <div class="hint">Pipeline menilai <b id="c-cand">4</b> kandidat dan hanya me-render yang terbaik;
+          tiap klip dibuat <b id="c-var">2</b> varian hook (A/B). Kampanye aktif otomatis nempel di metadata.
+          Use sources you're allowed to repurpose.</div>
       </div>
     </section>
 
@@ -213,14 +295,16 @@ const $=s=>document.querySelector(s), api=(u,o)=>fetch(u,o).then(r=>r.json());
 let busy=false;
 
 // nav
+const TITLES={home:'Home',generate:'Generate a video',clip:'Clip a YouTube video',review:'Review queue',tiktok:'TikTok benchmark',status:'Status'};
+function go(p){document.querySelector('.nav[data-p='+p+']').click();}
 document.querySelectorAll('.nav').forEach(n=>n.onclick=()=>{
   document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));
   n.classList.add('active');
   const p=n.dataset.p;
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('show'));
   $('#p-'+p).classList.add('show');
-  const titles={generate:'Generate a video',clip:'Clip a YouTube video',review:'Review queue',tiktok:'TikTok benchmark',status:'Status'};
-  $('#ttl').textContent=titles[p];
+  $('#ttl').textContent=TITLES[p];
+  if(p==='home')loadHome();
   if(p==='review')loadQueue();
   if(p==='status')loadStatus();
 });
@@ -255,7 +339,7 @@ function doGenerate(){
   runTask('/api/generate',{topic,language:$('#g-lang').value,scenes:+$('#g-scenes').value,image_provider:$('#g-img').value,caption_style:$('#g-cap').value,hook:$('#g-hook').value==='1'},
     $('#g-btn'),'Generating…',r=>{
       toast('Video ready ✓',`"${r.title}" — ${r.duration?.toFixed?.(1)||r.duration}s`,'ok');
-      gotoReview();
+      go('review');
     });
 }
 function doClip(){
@@ -264,7 +348,7 @@ function doClip(){
   runTask('/api/clip',{url,lang:$('#c-lang').value,clips:+$('#c-clips').value,target:+$('#c-target').value,crop:$('#c-crop').value,caption_style:$('#c-cap').value,hook:$('#c-hook').value==='1'},
     $('#c-btn'),'Clipping…',r=>{
       toast('Clips ready ✓',`${r.clips?.length||0} clip from "${r.source_title}"`,'ok');
-      gotoReview();
+      go('review');
     });
 }
 function doTiktok(){
@@ -282,9 +366,52 @@ function doTiktok(){
     toast('Stats ready ✓',`${rows.length} account(s)`,'ok');
   });
 }
-function gotoReview(){document.querySelector('.nav[data-p=review]').click();}
 
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+// ---- HOME ----------------------------------------------------------------
+function checkRow(ok,opt,title,fix){
+  const cls=ok?'ok':(opt?'opt':'bad'), icon=ok?'✓':(opt?'·':'!');
+  return `<div class="check"><div class="st ${cls}">${icon}</div>
+    <div><b>${title}</b>${ok?'':`<small>${fix}</small>`}</div></div>`;
+}
+async function loadHome(){
+  let d;try{d=await api('/api/doctor');}catch(e){return;}
+  const qc=d.queue_counts||{};
+  $('#h-stats').innerHTML=
+    `<div class="stat" onclick="go('review')"><div class="n">${qc.generated||0}</div><div class="l">menunggu review</div></div>`+
+    `<div class="stat" onclick="go('review')"><div class="n">${qc.approved||0}</div><div class="l">siap upload</div></div>`+
+    `<div class="stat" onclick="go('review')"><div class="n">${qc.uploaded||0}</div><div class="l">terupload</div></div>`+
+    `<div class="stat" onclick="go('status')"><div class="n">${d.campaign?'ON':'–'}</div><div class="l">${d.campaign?('campaign: '+esc(d.campaign)):'no campaign'}</div></div>`;
+  const rev=qc.generated||0, b=$('#n-rev');
+  b.style.display=rev?'inline-block':'none';b.textContent=rev;
+  $('#h-setup').innerHTML=
+    checkRow(d.ffmpeg,false,'ffmpeg (wajib — render video)',
+      'Install: <code>winget install Gyan.FFmpeg</code> lalu buka ulang terminal.')+
+    checkRow(d.llm_configured,false,'LLM API key (naskah, highlight, virality score)',
+      'Isi <code>LLM_API_KEY=...</code> di file .env (OpenRouter/Groq/DeepSeek). Tanpa ini pakai template sederhana.')+
+    checkRow(d.tiktok_token,true,'TikTok upload token (opsional)',
+      'Isi <code>TIKTOK_ACCESS_TOKEN=...</code> untuk upload draft otomatis. Tanpa ini: download manual dari Review.')+
+    checkRow(d.youtube_secrets,true,'YouTube credentials (opsional)',
+      'Taruh <code>secrets/youtube_client_secret.json</code> dari Google Cloud Console → YouTube Data API.')+
+    checkRow(!!d.campaign,true,'Campaign profile (opsional — buat clipping berbayar)',
+      'Edit <code>config/campaigns.json</code> lalu set <code>FE_CAMPAIGN=nama</code> di .env → hashtag/disclaimer kampanye otomatis nempel.')+
+    checkRow(!!d.own_account,true,'Akun TikTok sendiri (opsional — tracking earnings)',
+      'Set <code>FE_OWN_TIKTOK_ACCOUNT=@akunmu</code> lalu jalankan <code>python -m benchmark.own_stats</code>.')+
+    checkRow(d.opencv,true,'OpenCV (opsional — smart crop ikuti pembicara)',
+      'Install: <code>pip install opencv-python</code> lalu pilih framing “Smart” saat ngeklip.')+
+    checkRow(d.instagram,true,'Instagram Reels (opsional)',
+      'Butuh akun Business: <code>IG_ACCESS_TOKEN</code>, <code>IG_USER_ID</code>, <code>FE_IG_VIDEO_BASE_URL</code> di .env.');
+  $('#c-cand').textContent=d.clip_candidates;
+  $('#c-var').textContent=d.hook_variants;
+  try{
+    const {items}=await api('/api/queue?status=generated');
+    $('#h-recent').innerHTML=items.length?items.slice(-4).reverse().map(it=>
+      `<div class="rc" onclick="go('review')"><video src="/api/video/${it.queue_id}#t=0.5" preload="metadata" muted></video>
+       <div class="t">${esc(it.title)}</div></div>`).join('')
+      :'<div class="empty" style="padding:20px;grid-column:1/-1">Belum ada — bikin video pertamamu! ✨</div>';
+  }catch(e){}
+}
 
 async function loadQueue(){
   const st=$('#r-filter').value;
@@ -296,7 +423,8 @@ async function loadQueue(){
     <video src="/api/video/${it.queue_id}#t=0.5" controls preload="metadata"></video>
     <div class="body">
       <div class="ttl">${esc(it.title)}</div>
-      <div class="meta">#${it.queue_id} • ${esc((it.caption||'').slice(0,70))}…</div>
+      <div class="meta">#${it.queue_id} • ${esc((it.description||'').split('\n').find(l=>l.startsWith('Virality'))||'')}</div>
+      <div class="meta">${esc((it.caption||'').slice(0,70))}…</div>
       <div class="tags">${esc(it.hashtags||'')}</div>
       ${st==='generated'?`<div class="acts">
         <button class="btn ok sm" onclick="approve(${it.queue_id})">✓ Approve</button>
@@ -314,10 +442,14 @@ async function loadStatus(){
   const qc=Object.entries(d.queue_counts).map(([k,v])=>`<span class="tag">${k}: ${v}</span>`).join(' ');
   $('#s-out').innerHTML=`<table>
     <tr><td>ffmpeg</td><td><b style="color:${d.ffmpeg?'var(--ok)':'var(--danger)'}">${d.ffmpeg?'found':'MISSING'}</b></td></tr>
+    <tr><td>OpenCV (smart crop)</td><td><b>${d.opencv?'installed':'not installed'}</b></td></tr>
     <tr><td>LLM</td><td><b>${esc(d.llm)}</b> ${d.llm_model!=='-'?'('+esc(d.llm_model)+')':''}</td></tr>
     <tr><td>Imagery</td><td><b>${esc(d.image_provider)}</b></td></tr>
     <tr><td>Output</td><td><b>${d.output_spec}</b></td></tr>
-    <tr><td>Upload mode</td><td>TikTok <b>${d.tiktok_mode}</b> • YouTube <b>${d.youtube_privacy}</b></td></tr>
+    <tr><td>Clipping</td><td>candidates <b>${d.clip_candidates}</b> • hook variants <b>${d.hook_variants}</b> • crop <b>${esc(d.crop_mode)}</b></td></tr>
+    <tr><td>Campaign</td><td><b>${d.campaign?esc(d.campaign):'—'}</b>${d.campaign_cpm_idr?` (Rp${d.campaign_cpm_idr.toLocaleString()}/1k views)`:''}</td></tr>
+    <tr><td>Own account</td><td><b>${d.own_account?esc(d.own_account):'—'}</b></td></tr>
+    <tr><td>Upload mode</td><td>TikTok <b>${d.tiktok_mode}</b> • YouTube <b>${d.youtube_privacy}</b> • IG <b>${d.instagram?'configured':'—'}</b></td></tr>
     <tr><td>Queue</td><td>${qc}</td></tr></table>`;
 }
 
@@ -327,7 +459,7 @@ async function refreshPills(){
     $('#pills').innerHTML=
       `<span class="pill ${d.ffmpeg?'ok':'bad'}">ffmpeg ${d.ffmpeg?'✓':'✕'}</span>`+
       `<span class="pill">LLM <b>${d.llm_model!=='-'?esc(d.llm_model):'template'}</b></span>`+
-      `<span class="pill">img <b>${esc(d.image_provider)}</b></span>`+
+      (d.campaign?`<span class="pill ok">📣 ${esc(d.campaign)}</span>`:'')+
       `<span class="pill ok">SAFE</span>`;
   }catch(e){}
 }
@@ -339,7 +471,7 @@ async function refreshLogs(){
     $('#con-when').textContent=new Date().toLocaleTimeString();
   }catch(e){}
 }
-refreshPills();refreshLogs();loadQueue();
+refreshPills();refreshLogs();loadHome();
 setInterval(refreshLogs,2000);
 setInterval(refreshPills,15000);
 </script>

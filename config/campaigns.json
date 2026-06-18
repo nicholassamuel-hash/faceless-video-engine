@@ -1,0 +1,21 @@
+[
+  {
+    "name": "kontencom-example",
+    "cpm_idr": 7500,
+    "min_views_payout": 1000,
+    "required_hashtags": ["NamaBrand", "KontenChallenge"],
+    "mention": "@brandaccount",
+    "cta": "Cek link di bio untuk info lengkap!",
+    "disclaimer": "Konten promosi berbayar.",
+    "platforms": ["tiktok", "instagram", "youtube"],
+    "notes": "TEMPLATE - duplikat lalu isi sesuai brief kampanye di konten.com. Set FE_CAMPAIGN=<name> di .env untuk mengaktifkan."
+  },
+  {
+    "name": "edukasi-trading",
+    "cpm_idr": 0,
+    "required_hashtags": ["trading", "cryptoindonesia", "belajartrading"],
+    "disclaimer": "Edukasi, bukan ajakan investasi. DYOR.",
+    "platforms": ["youtube", "tiktok"],
+    "notes": "Profil non-kampanye untuk konten edukasi sendiri - dipakai agar disclaimer selalu ada."
+  }
+]

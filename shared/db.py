@@ -218,6 +218,39 @@ def already_uploaded(entry_id: int, platform: Platform) -> bool:
         return int(s.execute(stmt).scalar_one()) > 0
 
 
+def store_own_stats(rows: list[dict]) -> int:
+    """Persist a batch of our own posted videos' stat snapshots."""
+    from shared.models import OwnStat
+
+    with session_scope() as s:
+        for r in rows:
+            s.add(OwnStat(**r))
+        return len(rows)
+
+
+def successful_uploads(platform: Platform) -> list[dict]:
+    """Successful upload log rows (with remote ids) for a platform."""
+    with session_scope() as s:
+        stmt = (
+            select(UploadLog)
+            .where(
+                UploadLog.platform == platform,
+                UploadLog.result == UploadResult.success,
+                UploadLog.remote_id.is_not(None),
+            )
+            .order_by(UploadLog.attempted_at)
+        )
+        return [
+            {
+                "queue_entry_id": u.queue_entry_id,
+                "remote_id": u.remote_id,
+                "mode": u.mode,
+                "attempted_at": u.attempted_at,
+            }
+            for u in s.execute(stmt).scalars().all()
+        ]
+
+
 def store_tiktok_stats(rows: list[dict]) -> int:
     """Persist a batch of TikTok video stat snapshots. Returns count stored."""
     from shared.models import TikTokStat
